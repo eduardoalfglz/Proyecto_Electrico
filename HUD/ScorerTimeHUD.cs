@@ -36,7 +36,7 @@ public class ScorerTimeHUD : MonoBehaviour {
 		//Debug.Log(minutes);
 				
 		string time = string.Format ("{0:00}:{1:00}", minutes, seconds);
-		GetComponentInChildren<GUIText> ().text = time;
+		//GetComponentInChildren<GUIText> ().text = time;
 
 		//Codigo para tiempo corrido, en minutos
 		if (inGame.state != InGameState_Script.InGameState.FIN) {	

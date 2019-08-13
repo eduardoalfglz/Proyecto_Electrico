@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
-
+using UnityEngine.SceneManagement;
 public class ChooseTeam : MonoBehaviour {
 
 	
@@ -16,13 +16,13 @@ public class ChooseTeam : MonoBehaviour {
 
 
 		if ( localOrVisit == "Local") {
-			Selected = "Blue";
+			Selected = "blue";
 		} else {
-			Selected = "Green";
+			Selected = "green";
 		}
 	
 	}
-	
+	//Nota se puede cambiar el menú completamente para hacerlo más sencillo, con los player prefabs se puede guardar cuál es el uniforme que se quiere
 	// Update is called once per frame
 	void Update () {
 	
@@ -54,7 +54,8 @@ public class ChooseTeam : MonoBehaviour {
 			if ( hit.collider && hit.collider.tag == "playbutton" ) {
 
 				PlayerPrefs.SetString( localOrVisit, Selected  );
-				Application.LoadLevel("Football_match");
+                SceneManager.LoadScene("Football_match");
+				//Application.LoadLevel("Football_match");
 
 			}
 

@@ -1,9 +1,9 @@
 using UnityEngine;
 using System.Collections;
 //
-//public class Camera_Script : MonoBehaviour {
-	
-	/*public Transform target;	
+public class Camera_Script : MonoBehaviour {
+
+    /*public Transform target;	
 	public Vector3 targetOffsetPos;
 	private Vector3 oldPos;	
 	
@@ -49,5 +49,5 @@ using System.Collections;
 		}		
 		
 	}
-}
 */
+}

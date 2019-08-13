@@ -36,8 +36,8 @@ public class InGameState_Script : MonoBehaviour {
 	};
 	
 
-	public Material localTeam;
-	public Material visitTeam;
+	//public Material localTeam;
+	//public Material visitTeam;
 	
 	public bool scoredbylocal = true; //false
 	public bool scoredbyvisiting = false; //true
@@ -203,14 +203,16 @@ public class InGameState_Script : MonoBehaviour {
 
 		//EstaturaJugadores(players,oponents,keeper,keeper_oponent,0.1f,0.2f,0.2f);
 		// Load Team textures 
-		LoadTeams ();
+		//LoadTeams ();
 
 	}
 	
-
+    //This code is useless ED
 	void LoadTeams ()
 	{
-		localMaterial.mainTexture = Resources.Load ("Textures/" + "player_" + PlayerPrefs.GetString ("Local") + "_texture") as Texture2D;
+        Debug.Log(PlayerPrefs.GetString("Local"));
+        Debug.Log(PlayerPrefs.GetString("Visit"));
+        localMaterial.mainTexture = Resources.Load ("Textures/" + "player_" + PlayerPrefs.GetString ("Local") + "_texture") as Texture2D;
 		visitMaterial.mainTexture = Resources.Load ("Textures/" + "player_" + PlayerPrefs.GetString ("Visit") + "_texture") as Texture2D;
 	}	
 	

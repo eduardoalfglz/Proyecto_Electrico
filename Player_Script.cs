@@ -118,7 +118,13 @@ public class Player_Script : MonoBehaviour {
 
 
 	void  Start (){
-		keeper = GameObject.FindGameObjectWithTag("GoalKeeper");
+        //Debug.Log(GetComponentInChildren<SkinnedMeshRenderer>().material);
+
+        //Material Mat= Resources.Load("Materials/" + "player_texture_blue") as Material;
+        //Debug.Log(Mat);
+        GetComponentInChildren<SkinnedMeshRenderer>().material = Resources.Load("Materials/" + "player_texture_"+PlayerPrefs.GetString(transform.parent.name)) as Material;
+       
+        keeper = GameObject.FindGameObjectWithTag("GoalKeeper");
 		keeper_oponent = GameObject.FindGameObjectWithTag("GoalKeeper_Oponent");
 		listPosicion= new List<string>();
 			

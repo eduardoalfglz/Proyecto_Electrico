@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 public class ScoreHUD : MonoBehaviour {
 
@@ -15,6 +16,6 @@ public class ScoreHUD : MonoBehaviour {
 	// Update is called once per frame
 	void LateUpdate () {
 	
-		GetComponentInChildren<GUIText> ().text = inGame.score_local + " - " + inGame.score_visiting;
+		//GetComponentInChildren<GUIText> ().text = inGame.score_local + " - " + inGame.score_visiting;
 	}
 }
