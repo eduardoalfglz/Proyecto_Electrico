@@ -47,17 +47,19 @@ public class ChooseTeam : MonoBehaviour {
 
 						shield.GetComponent<Renderer>().material = selectMaterial;
 						Selected = shield.nameTeam;
-					}
+                        
+                    }
 				}
 			}
-
+            //This is the most useless code ever :)
 			if ( hit.collider && hit.collider.tag == "playbutton" ) {
 
-				PlayerPrefs.SetString( localOrVisit, Selected  );
-                SceneManager.LoadScene("Football_match");
-				//Application.LoadLevel("Football_match");
+				
+                //SceneManager.LoadScene("Football_match");
+                PlayerPrefs.SetString(localOrVisit, Selected);
+                //Application.LoadLevel("Football_match");
 
-			}
+            }
 
 
 		}

@@ -1,0 +1,4 @@
+
+Cargar materiales desde assets:
+https://answers.unity.com/questions/881890/load-material-from-assets.html
+
