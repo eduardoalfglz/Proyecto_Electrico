@@ -42,23 +42,24 @@ public class GoalKeeper_Script : MonoBehaviour {
 	public int BanderaPosicion=0;
 	public int PosFinalMasLarga=0;
 	public float stamina = 64.0f;
-	public InGameState_Script inGame;
+	//public InGameState_Script inGame;
 	private float inputSteer; //Direccion de entrada
 	private Vector3 initialPosition1;
 	public int valor_state=0; //para saber que 
 
 	public List<string> listPosicion;
-	public ScorerTimeHUD scorerTime;
+	private ScorerTimeHUD scorerTime;
 
 	private GameObject[] players;
-	private GameObject[] oponents;
+	private GameObject[] opponents;
 
 	//-----------------------------------------------
 
 	// Use this for initialization
 	void Start () {
-		players = GameObject.FindGameObjectsWithTag("PlayerTeam1");   //rojos
-		oponents = GameObject.FindGameObjectsWithTag("OponentTeam");  //Amarillos
+        scorerTime = GameObject.FindObjectOfType(typeof(ScorerTimeHUD)) as ScorerTimeHUD;
+        players = GameObject.FindGameObjectsWithTag("PlayerTeam1");   //rojos
+		opponents = GameObject.FindGameObjectsWithTag("OpponentTeam");  //Amarillos
 		listPosicion= new List<string>();
 
 		initial_Position = transform.position;
@@ -351,7 +352,7 @@ public class GoalKeeper_Script : MonoBehaviour {
 
 	public void CambioEstado(){
 		if(valor_state==1){
-			inGame.state = InGameState_Script.InGameState.Medio_Tiempo;
+			//inGame.state = InGameState_Script.InGameState.Medio_Tiempo;
 		}		
 	}
 
@@ -381,38 +382,38 @@ public class GoalKeeper_Script : MonoBehaviour {
 	//Para saber si el portero esta tocando el balon
 	void OnCollisionStay( Collision coll ) {
 		
-		if ( Camera.main.GetComponent<InGameState_Script>().state == InGameState_Script.InGameState.PLAYING ) {
+		//if ( Camera.main.GetComponent<InGameState_Script>().state == InGameState_Script.InGameState.PLAYING ) {
 		
-			if ( coll.collider.transform.gameObject.tag == "Ball" && state != GoalKeeper_State.UP_WITH_BALL && state != GoalKeeper_State.PASS_HAND && state != GoalKeeper_State.GOAL_KICK &&
-				 state != GoalKeeper_State.JUMP_LEFT && state != GoalKeeper_State.JUMP_RIGHT &&
-				 state != GoalKeeper_State.JUMP_LEFT_DOWN && state != GoalKeeper_State.JUMP_RIGHT_DOWN) {
+		//	if ( coll.collider.transform.gameObject.tag == "Ball" && state != GoalKeeper_State.UP_WITH_BALL && state != GoalKeeper_State.PASS_HAND && state != GoalKeeper_State.GOAL_KICK &&
+		//		 state != GoalKeeper_State.JUMP_LEFT && state != GoalKeeper_State.JUMP_RIGHT &&
+		//		 state != GoalKeeper_State.JUMP_LEFT_DOWN && state != GoalKeeper_State.JUMP_RIGHT_DOWN) {
 							
-				Camera.main.GetComponent<InGameState_Script>().lastTouched = gameObject;//ESTE ES EL ULTIMO JUGADOR EN TOCAR EL BALON
+		//		Camera.main.GetComponent<InGameState_Script>().lastTouched = gameObject;//ESTE ES EL ULTIMO JUGADOR EN TOCAR EL BALON
 
-				sphere.codigo=0.0f;
-				foreach ( GameObject go in players ) {
-					go.GetComponent<Player_Script>().state = Player_Script.Player_State.GO_ORIGIN;
-				}
-				foreach ( GameObject go in oponents ) {
-					go.GetComponent<Player_Script>().state = Player_Script.Player_State.GO_ORIGIN;
-				}
+		//		sphere.codigo=0.0f;
+		//		foreach ( GameObject go in players ) {
+		//			go.GetComponent<Player_Script>().state = Player_Script.Player_State.GO_ORIGIN;
+		//		}
+		//		foreach ( GameObject go in opponents ) {
+		//			go.GetComponent<Player_Script>().state = Player_Script.Player_State.GO_ORIGIN;
+		//		}
 
-				Vector3 relativePos = transform.InverseTransformPoint( sphere.gameObject.transform.position );
+		//		Vector3 relativePos = transform.InverseTransformPoint( sphere.gameObject.transform.position );
 				
-				// only get ball if the altitude is 0.35f (relative)
-				if ( relativePos.y < 0.35f ) { 
+		//		// only get ball if the altitude is 0.35f (relative)
+		//		if ( relativePos.y < 0.35f ) { 
 				
-					sphere.owner = null;
+		//			sphere.owner = null;
 		
-					GetComponent<Animation>().Play("goalkeeper_get_ball_front");
-					state = GoalKeeper_State.GET_BALL_DOWN;
+		//			GetComponent<Animation>().Play("goalkeeper_get_ball_front");
+		//			state = GoalKeeper_State.GET_BALL_DOWN;
 					
-				}
+		//		}
 				
 				
-			}
+		//	}
 		
-		}
+		//}
 		
 	}
 	

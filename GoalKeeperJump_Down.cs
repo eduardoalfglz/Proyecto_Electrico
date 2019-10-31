@@ -27,7 +27,7 @@ public class GoalKeeperJump_Down : MonoBehaviour {
 			
 			float det = Vector3.Dot( dir_goalkeeper, dir_ball );
 						
-			Debug.Log("det " + Mathf.Acos(det) * 57.0f + " speed " + other.gameObject.GetComponent<Rigidbody>().velocity.magnitude);
+			//Debug.Log("det " + Mathf.Acos(det) * 57.0f + " speed " + other.gameObject.GetComponent<Rigidbody>().velocity.magnitude);
 			float degree = Mathf.Acos(det) * 57.0f;
 			
 			if ( degree > 90.0f && degree < 270.0f && other.gameObject.GetComponent<Rigidbody>().velocity.magnitude > 5.0f && !other.gameObject.GetComponent<Rigidbody>().isKinematic) {			

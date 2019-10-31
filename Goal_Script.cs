@@ -3,19 +3,27 @@ using System.Collections;
 
 public class Goal_Script : MonoBehaviour {
 	
-	public Sphere sphere;
+	private Sphere sphere;
 	public GameObject goalKeeper;
-	public InGameState_Script ingame;
-	public MeshFilter red;
+	//private InGameState_Script ingame;
+	private MeshFilter red;
 	private Vector3[] arrayOriginalVertices;	
 	
 	// Use this for initialization
 	void Start () {
-		// get ball  in scene
-		sphere = (Sphere)GameObject.FindObjectOfType( typeof(Sphere) );	
-
-		// get net vertex to modify them
-		arrayOriginalVertices = new Vector3[ red.mesh.vertices.Length ];
+        // get ball  in scene
+        //ingame = GameObject.Find("Main_Camera").GetComponent<InGameState_Script>();
+        sphere = (Sphere)GameObject.FindObjectOfType( typeof(Sphere) );
+        if (gameObject.name== "Goal_Trigger_Right")
+        {
+            red = GameObject.Find("GoalRight").GetComponentInChildren<MeshFilter>();
+        }
+        else
+        {
+            red = GameObject.Find("GoalLeft").GetComponentInChildren<MeshFilter>();
+        }
+        // get net vertex to modify them
+        arrayOriginalVertices = new Vector3[ red.mesh.vertices.Length ];
 		
 		for (int f=0; f< red.mesh.vertices.Length; f++) {
 			arrayOriginalVertices[f] = red.mesh.vertices[f];
@@ -29,36 +37,36 @@ public class Goal_Script : MonoBehaviour {
 	
 	void OnTriggerEnter( Collider other) {
 
-		// if ball is inside then is GOAL
-		if ( other.gameObject.tag == "Ball" && Camera.main.GetComponent<InGameState_Script>().state == InGameState_Script.InGameState.PLAYING ) {
+		//// if ball is inside then is GOAL
+		//if ( other.gameObject.tag == "Ball" && Camera.main.GetComponent<InGameState_Script>().state == InGameState_Script.InGameState.PLAYING ) {
 			
-			sphere.owner = null;
+		//	sphere.owner = null;
 			
-			goalKeeper.GetComponent<GoalKeeper_Script>().state = GoalKeeper_Script.GoalKeeper_State.GOAL_KICK;
-			goalKeeper.GetComponent<Animation>().PlayQueued("rest");
+		//	goalKeeper.GetComponent<GoalKeeper_Script>().state = GoalKeeper_Script.GoalKeeper_State.GOAL_KICK;
+		//	goalKeeper.GetComponent<Animation>().PlayQueued("rest");
 
-			// add score depending of goal side
-			if ( goalKeeper.tag == "GoalKeeper_Oponent" && ingame.state != InGameState_Script.InGameState.GOAL) {
-				ingame.score_local++;
-				ingame.scoredbylocal = true;
-				ingame.scoredbyvisiting = false;
-			} 
+		//	// add score depending of goal side
+		//	if ( goalKeeper.tag == "GoalKeeper_Oponent" && ingame.state != InGameState_Script.InGameState.GOAL) {
+		//		ingame.score_local++;
+		//		ingame.scoredbylocal = true;
+		//		ingame.scoredbyvisiting = false;
+		//	} 
 			
-			if ( goalKeeper.tag == "GoalKeeper" && ingame.state != InGameState_Script.InGameState.GOAL) {			
-				ingame.score_visiting++;
-				ingame.scoredbylocal = false;
-				ingame.scoredbyvisiting = true;
-			}
+		//	if ( goalKeeper.tag == "GoalKeeper" && ingame.state != InGameState_Script.InGameState.GOAL) {			
+		//		ingame.score_visiting++;
+		//		ingame.scoredbylocal = false;
+		//		ingame.scoredbyvisiting = true;
+		//	}
 			
 			
-			Camera.main.GetComponent<InGameState_Script>().timeToChangeState = 2.0f;
-			Camera.main.GetComponent<InGameState_Script>().state = InGameState_Script.InGameState.GOAL;
-		}
+		//	Camera.main.GetComponent<InGameState_Script>().timeToChangeState = 2.0f;
+		//	Camera.main.GetComponent<InGameState_Script>().state = InGameState_Script.InGameState.GOAL;
+		//}
 		
-		if ( (other.gameObject.tag == "PlayerTeam1" || other.gameObject.tag == "OponentTeam") && Camera.main.GetComponent<InGameState_Script>().state != InGameState_Script.InGameState.PLAYING ) {
-				other.gameObject.GetComponent<Player_Script>().state = Player_Script.Player_State.RESTING;
+		//if ( (other.gameObject.tag == "PlayerTeam1" || other.gameObject.tag == "OponentTeam") && Camera.main.GetComponent<InGameState_Script>().state != InGameState_Script.InGameState.PLAYING ) {
+		//		other.gameObject.GetComponent<Player_Script>().state = Player_Script.Player_State.RESTING;
 				
-			}
+		//	}
 		
 	}
 	/*

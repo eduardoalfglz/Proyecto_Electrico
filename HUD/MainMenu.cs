@@ -79,6 +79,7 @@ public class MainMenu : MonoBehaviour
         Debug.Log("Options");
 
         MMenu.SetActive(false);
+        Select_team.SetActive(false);
         //EventS1.SetActive(false);
         OptionsMenu.SetActive(true);
         //EventS2.SetActive(true);

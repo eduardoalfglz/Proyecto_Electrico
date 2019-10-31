@@ -1,0 +1,46 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Drawing;
+using System.Data;
+using System.Threading.Tasks;
+using UnityEngine;
+using Microsoft.Expression.Encoder;
+using Microsoft.Expression.Encoder.ScreenCapture;
+using Microsoft.Expression.Encoder.Devices;
+
+namespace ScreenRecorderUnity
+{
+
+    public class Record_Screen
+    {
+        private ScreenCaptureJob gotu;
+
+
+
+        public void StartRecording()
+        {
+            gotu = new ScreenCaptureJob();
+            System.Drawing.Size WorkingArea = SystemImformation.WorkingArea.Size;
+            Rectangle CaptureRect = new Rectangle(0, 0, WorkingArea.Width(WorkingArea.Width % 4), WorkingArea.Height(WorkingArea.Height % 4));
+            gotu.CaptureRectangle = CaptureRect;
+            gotu.ShowFlashingBoundary = true;
+            //gotu.ShowCountdown = true;
+            //gotu.ShowMouseCoursor = true;
+            //https://www.youtube.com/watch?v=YiEexIFHYn8
+            gotu.OutputPath = @"C:\VideoProyecto"; //Modificar luego
+            //gotu.OutputScreenCaptureFileName = "CpturaVideo";
+            gotu.Start();
+
+        }
+        public void StopRecording()
+        {
+            /*if (gotu.Status == Record.Status.Running)
+            {
+                gotu.Stop();
+            }*/
+            gotu.Stop();
+        }
+    }
+}

@@ -1,0 +1,9 @@
+-r:System.Net.Http.dll
+-r:C:\Windows\Microsoft.NET\Framework\v4.0.30319\WPF\PresentationCore.dll
+-r:C:\Windows\Microsoft.NET\Framework\v4.0.30319\WPF\PresentationFramework.dll
+-r:C:\Windows\Microsoft.NET\Framework\v4.0.30319\WPF\UIAutomationTypes.dll
+-r:C:\Windows\Microsoft.NET\Framework\v4.0.30319\WPF\System.Windows.Input.Manipulations.dll
+-r:C:\Windows\Microsoft.NET\Framework\v4.0.30319\WPF\UIAutomationProvider.dll
+-r:C:\Windows\Microsoft.NET\Framework\v4.0.30319\WPF\ReachFramework.dll
+-r:C:\Windows\Microsoft.NET\Framework\v4.0.30319\WPF\System.Printing.dll
+-r:C:\Windows\Microsoft.NET\Framework\v4.0.30319\System.Deployment.dll

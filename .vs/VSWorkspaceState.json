@@ -1,0 +1,11 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\AI",
+    "\\AI\\Behaviors",
+    "\\AI\\BehaviorTree",
+    "\\AI\\BehaviorTree\\CustomNodes"
+  ],
+  "SelectedNode": "\\AI\\BehaviorTree\\Selector.cs",
+  "PreviewInSolutionExplorer": false
+}

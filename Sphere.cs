@@ -1,38 +1,43 @@
 using UnityEngine;
+using System.Collections.Generic;
 using System.Collections;
 
 
 public class Sphere : MonoBehaviour {
 	
-	public GameObject owner;	// the player it owns the ball
+	public SPlayer owner;	// the player it owns the ball
 	public GameObject inputPlayer;	// player selected
 	public GameObject lastInputPlayer;	// last player selected
-	private GameObject[] players;
-	private GameObject[] oponents;
-	public Transform shadowBall;
-	public Transform blobPlayerSelected;
+	
+    public List<SPlayer> Locals = new List<SPlayer>();
+    public List<SPlayer> Visitors = new List<SPlayer>();
+    public Transform shadowBall;
+	//public Transform blobPlayerSelected;
 	public float timeToSelectAgain = 0.0f;
 	public GameObject lastCandidatePlayer;
 	
-	[HideInInspector]	
-	public float fHorizontal;
-	[HideInInspector]	
-	public float fVertical;
-	[HideInInspector]	
-	public bool bPassButton;
-	[HideInInspector]	
-	public bool bShootButton;
-	[HideInInspector]
-	public bool bShootButtonFinished;
-	[HideInInspector]		
-	public bool pressiPhoneShootButton = false;
-	[HideInInspector]	
-	public bool pressiPhonePassButton = false;
-	[HideInInspector]	
-	public bool pressiPhoneShootButtonEnded = false;
-	
-	//public Joystick_Script joystick;	
-	public InGameState_Script inGame;
+	//[HideInInspector]	
+	//public float fHorizontal;
+	//[HideInInspector]	
+	//public float fVertical;
+	//[HideInInspector]	
+	//public bool bPassButton;
+	//[HideInInspector]	
+	//public bool bShootButton;
+	//[HideInInspector]
+	//public bool bShootButtonFinished;
+	//[HideInInspector]		
+	//public bool pressiPhoneShootButton = false;
+	//[HideInInspector]	
+	//public bool pressiPhonePassButton = false;
+	//[HideInInspector]	
+	//public bool pressiPhoneShootButtonEnded = false;
+
+    //public Joystick_Script joystick;	
+    //public InGameState_Script inGame;
+
+    public InGameState_Script inGame;
+
 	public float timeShootButtonPressed = 0.0f;
 
 	public ScorerTimeHUD scorerTime; //AGREGO
@@ -42,12 +47,13 @@ public class Sphere : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		// get players, joystick, InGame and Blob
-		players = GameObject.FindGameObjectsWithTag("PlayerTeam1");		
-		oponents = GameObject.FindGameObjectsWithTag("OponentTeam");
+        // get players, joystick, InGame and Blob
+        Locals = GameObject.Find("Local").GetComponent<STeam>().Locals;
+        Visitors= GameObject.Find("Visit").GetComponent<STeam>().Visitors;
+        
 		//joystick = GameObject.FindGameObjectWithTag("joystick").GetComponent<Joystick_Script>();
-		//inGame = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<InGameState_Script>();
-		blobPlayerSelected = GameObject.FindGameObjectWithTag("PlayerSelected").transform;		
+		inGame = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<InGameState_Script>();
+		//blobPlayerSelected = GameObject.FindGameObjectWithTag("PlayerSelected").transform;		
 	}
 
 
@@ -61,41 +67,12 @@ public class Sphere : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 
-		/******************************************************************
-		Entraa de teclas para mover, pase, shoot
-		******************************************************************/
-		// get input
-		/* 
-		fVertical = Input.GetAxis("Vertical");
-		fHorizontal = Input.GetAxis("Horizontal");
-		fVertical += joystick.position.y;
-		fHorizontal += joystick.position.x;
-
-		bPassButton = Input.GetKey(KeyCode.Space) || pressiPhonePassButton;
-		bShootButton = Input.GetKey(KeyCode.LeftControl) || pressiPhoneShootButton;
 		
-		
-		// ha soltado el boton de chut?
-		
-		if ( Input.GetKeyUp(KeyCode.LeftControl) || pressiPhoneShootButtonEnded) {
-			
-			bShootButtonFinished = true;
-		}
-		
-		
-		if ( bShootButton ) {
-			timeShootButtonPressed += Time.deltaTime;
-		
-		} else {
-			timeShootButtonPressed = 0.0f;
-		}
-		*/		
-		// if the ball has owner then just put on its feets
 		if ( owner!=null ) {
 			
 			
 	 		transform.position = owner.transform.position + owner.transform.forward/1.5f + owner.transform.up/5.0f; 
-			float velocity = owner.GetComponent<Player_Script>().actualVelocityPlayer.magnitude;
+			float velocity = owner.transform.forward.magnitude*5f*Time.deltaTime;
 			//float direc_z=(transform.position-owner.transform.position)/(transform.position.z-owner.transform.position.z);
 			//////Debug.Log("La direccion en z de owner es: "+direc_z);
 			//Debug.Log("Owner: "+owner);
@@ -107,94 +84,106 @@ public class Sphere : MonoBehaviour {
 			}
 			*/								//eje rojo
 			transform.RotateAround( owner.transform.right, velocity*10.0f );
-			
 
-		}
+
+
+
+        }
+        else //FIXME: esto no permite que le quiten el balon
+        {
+            
+            float ballRadius = 0.8f;
+            foreach (SPlayer item in Locals)
+            {
+                if (Vector3.SqrMagnitude(item.transform.position - transform.position) < ballRadius)
+                {
+                    
+                    this.owner=item;
+                }
+            }
+
+            foreach (SPlayer item in Visitors)
+            {
+                if (Vector3.SqrMagnitude(item.transform.position - transform.position) < ballRadius)
+                {
+                    this.owner = item;
+                }
+            }
+        }
 		
 				
 		
 		
 																			//AGREGUE
 		
-		//if ( inGame.state ==  InGameState_Script.InGameState.PLAYING || scorerTime.minutes < 46.0f ) {
-		if ( (inGame.state ==  InGameState_Script.InGameState.PLAYING && codigo==1.0f )){
-			////////Debug.Log("PRUEBA_3");
-			//Activar el jugador más cercano
-			
-			ActivateNearestPlayer();
-			//ActivateNearestOponent();  //Puse
-	
-			if ( !owner || owner.tag == "PlayerTeam1" )
-				ActivateNearestOponent();//Amarillos
 		
-		}
 
 		
 	}
 
 	// activate nearest oponent to ball;
-	void ActivateNearestOponent() {
+	//void ActivateNearestOponent() {
 	
-		float distance = 100000.0f;
-		GameObject candidatePlayer = null;
-		foreach ( GameObject oponent in oponents ) {			
+	//	float distance = 100000.0f;
+	//	GameObject candidatePlayer = null;
+	//	foreach ( GameObject oponent in opponent ) {			
 			
-			if ( !oponent.GetComponent<Player_Script>().temporallyUnselectable ) {
+	//		if ( !oponent.GetComponent<Player_Script>().temporallyUnselectable ) {
 				
-				oponent.GetComponent<Player_Script>().state = Player_Script.Player_State.MOVE_AUTOMATIC;
+	//			oponent.GetComponent<Player_Script>().state = Player_Script.Player_State.MOVE_AUTOMATIC;
 				
-				Vector3 relativePos = transform.InverseTransformPoint( oponent.transform.position );
+	//			Vector3 relativePos = transform.InverseTransformPoint( oponent.transform.position );
 				
-				float newdistance = relativePos.magnitude;
+	//			float newdistance = relativePos.magnitude;
 				
-				if ( newdistance < distance ) {
+	//			if ( newdistance < distance ) {
 				
-					distance = newdistance;
-					candidatePlayer = oponent;
+	//				distance = newdistance;
+	//				candidatePlayer = oponent;
 					
-				}
-			}
+	//			}
+	//		}
 			
-		}
+	//	}
 		
-		// set in STOLE_BALL if player found
-		if ( candidatePlayer )
-			 candidatePlayer.GetComponent<Player_Script>().state = Player_Script.Player_State.STOLE_BALL;
+	//	// set in STOLE_BALL if player found
+	//	if ( candidatePlayer )
+	//		 candidatePlayer.GetComponent<Player_Script>().state = Player_Script.Player_State.STOLE_BALL;
 		
 		
-	}
+	//}
 	
-	// activate nearest player to ball
-	void ActivateNearestPlayer() {
+	//// activate nearest player to ball
+	//void ActivateNearestPlayer() {
 		
-		//------------------------PUSE----------------------------------------------------
+	//	//------------------------PUSE----------------------------------------------------
 		
-		float distance = 100000.0f;
-		GameObject candidatePlayer = null;
-		foreach ( GameObject player in players ) {			
+	//	float distance = 100000.0f;
+	//	GameObject candidatePlayer = null;
+	//	foreach ( GameObject player in players ) {			
 			
-			if ( !player.GetComponent<Player_Script>().temporallyUnselectable ) {
+	//		if ( !player.GetComponent<Player_Script>().temporallyUnselectable ) {
 				
-				player.GetComponent<Player_Script>().state = Player_Script.Player_State.MOVE_AUTOMATIC;
+	//			player.GetComponent<Player_Script>().state = Player_Script.Player_State.MOVE_AUTOMATIC;
 				
-				Vector3 relativePos = transform.InverseTransformPoint( player.transform.position );
+	//			Vector3 relativePos = transform.InverseTransformPoint( player.transform.position );
 				
-				float newdistance = relativePos.magnitude;
+	//			float newdistance = relativePos.magnitude;
 				
-				if ( newdistance < distance ) {
+	//			if ( newdistance < distance ) {
 				
-					distance = newdistance;
-					candidatePlayer = player;
+	//				distance = newdistance;
+	//				candidatePlayer = player;
 					
-				}
-			}
+	//			}
+	//		}
 			
-		}
+	//	}
 		
-		// set in STOLE_BALL if player found
-		if ( candidatePlayer )
-			candidatePlayer.GetComponent<Player_Script>().state = Player_Script.Player_State.STOLE_BALL;
-		//----------------------------------------------------------------------
+	//	// set in STOLE_BALL if player found
+	//	if ( candidatePlayer )
+	//		candidatePlayer.GetComponent<Player_Script>().state = Player_Script.Player_State.STOLE_BALL;
+	//	//----------------------------------------------------------------------
 		
 	/*	
 		lastInputPlayer = inputPlayer;
@@ -248,7 +237,7 @@ public class Sphere : MonoBehaviour {
 			}
 		} */
 	
-	}
+	//}
 	
 		
 	
