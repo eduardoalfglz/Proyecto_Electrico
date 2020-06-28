@@ -53,10 +53,33 @@ public class STeam : MonoBehaviour
     public Dictionary<string, float> ControlTimes;
     public List<string> Tkeys;
 
+    //GPSEnable Variables
+    //###############################################################################
+    private bool GPSEnable;
+
+    //###############################################################################
+
     // Start is called before the first frame update
     void Start()
     {
+        GPSEnable = PlayerPrefs.GetInt("GPSEnable") == 1 ? true : false;
+        if (!GPSEnable)
+        {
+            SetVariables();
+        } else
+        {
+            
+        }
+        
 
+
+
+
+    }
+
+    // Use this for initialization when gps is disabled
+    void SetVariables()
+    {
         ControlTimes = new Dictionary<string, float>();
         Tkeys = new List<string>(); //FIXME: esto no tiene sentido
 
@@ -218,20 +241,144 @@ public class STeam : MonoBehaviour
 
             Visitors[8].GetComponent<SPlayer>().type = SPlayer.TypePlayer.ATTACKER;
             Visitors[9].GetComponent<SPlayer>().type = SPlayer.TypePlayer.ATTACKER;
-            
+
         }
         EstaturaJugadores(Locals, Visitors, GK_LocaL, GK_Visit, 0.1f, 0.7f, 0.1f);
         //Local
-
-
-
-
-
-
-
-
     }
 
+
+    // Use this for initialization when gps is Enabled
+    void SetVariablesGPS()
+    {
+        ControlTimes = new Dictionary<string, float>();
+        Tkeys = new List<string>(); //FIXME: esto no tiene sentido
+
+        ControlTimes.Add("Pass", 2f);
+        //behavior = GameObject.FindObjectOfType<CompositeBehavior>() as CompositeBehavior;
+
+        sphere = GameObject.Find("soccer_ball").GetComponent<Sphere>();
+        GK_LocaL = GameObject.Find("GoalKeeper_Local");
+        GK_Visit = GameObject.Find("GoalKeeper_Visit");
+        //Inicializacion de jugadores
+
+        //Local
+        Local = GameObject.Find("Local");
+        //FIXME 16.9.19 Aqui se puede crear un archivo para guardar las posiciones predeterminadas de los jugadores, de esa forma crear "formaciones"
+        local_position = new Vector3[10];
+
+        //Defenders
+        local_position[0] = new Vector3(-24.96248f, 0.2552834f, -42.93238f); //Posicion jugador 0
+        local_position[1] = new Vector3(-6.817955f, 0.2552834f, -40.34002f); //Posicion jugador 1
+        local_position[2] = new Vector3(5.819132f, 0.2552834f, -40.9691f); //Posicion jugador 2
+        local_position[3] = new Vector3(22.76717f, 0.2552834f, -42.93238f); //Posicion jugador 3
+
+        //Middlers
+        local_position[4] = new Vector3(22.55046f, 0.2552834f, -24.74275f); //Posicion jugador 4
+        local_position[5] = new Vector3(12.20201f, 0.2552834f, -22.64586f); //Posicion jugador 5
+        local_position[6] = new Vector3(-0.4350719f, 0.2552834f, -22.01679f); //Posicion jugador 6
+        local_position[7] = new Vector3(-17.71658f, 0.2552834f, -23.01151f); //Posicion jugador 7
+
+        //Attackers
+        local_position[8] = new Vector3(-6.5f, 0.2552834f, -10f); //Posicion jugador 8
+        local_position[9] = new Vector3(6f, 0.2552834f, -9f); //Posicion jugador 8
+
+
+
+        local_init_position = new Vector3[10];
+
+        //Defenders
+        local_init_position[0] = new Vector3(-23.4f, 0.2552834f, -31.4f); //Posicion jugador 0
+        local_init_position[1] = new Vector3(-10.1f, 0.2552834f, -37.2f); //Posicion jugador 1
+        local_init_position[2] = new Vector3(10.1f, 0.2552834f, -36.3f); //Posicion jugador 2
+        local_init_position[3] = new Vector3(24.77f, 0.2552834f, -29.39f); //Posicion jugador 3
+
+        //Middlers
+        local_init_position[4] = new Vector3(20.46f, 0.2552834f, -8.85f); //Posicion jugador 4
+        local_init_position[5] = new Vector3(7.65f, 0.2552834f, -13.26f); //Posicion jugador 5
+        local_init_position[6] = new Vector3(-5.7f, 0.2552834f, -13.4f); //Posicion jugador 6
+        local_init_position[7] = new Vector3(-21.1f, 0.2552834f, -8.7f); //Posicion jugador 7
+
+        //Attackers
+        local_init_position[8] = new Vector3(-1.5f, 0.2552834f, -1); //Posicion jugador 8
+        local_init_position[9] = new Vector3(1.5f, 0.2552834f, -1); //Posicion jugador 8
+
+
+
+        Visit = GameObject.Find("Visit");
+        //FIXME 16.9.19 Aqui se puede crear un archivo para guardar las posiciones predeterminadas de los jugadores, de esa forma crear "formaciones"
+        visit_position = new Vector3[10];
+        visit_init_position = new Vector3[10];
+        for (int i = 0; i < 10; i++) //Same position as local but mirrowed
+        {
+            visit_position[i] = local_position[i];
+            visit_position[i].z = -visit_position[i].z;
+            visit_init_position[i] = local_init_position[i];
+            visit_init_position[i].z = -local_init_position[i].z + 10f;
+            //visit_init_position[i].z = -visit_position[i].z;
+        }
+
+        visit_init_position[8] = new Vector3(-6.2f, 0.2552834f, 8.8f); //Posicion jugador 8 visitante debe ser diferente a la del local
+        visit_init_position[9] = new Vector3(6.59f, 0.2552834f, 8.4f); //Posicion jugador p visitante debe ser diferente a la del local
+
+
+        if (this.name == "Local")
+        {
+            SPlayer tempPlayer;
+
+            for (int i = 0; i < 10; i++)
+            {
+                tempPlayer = Instantiate(playerPrefab, local_position[i], Quaternion.identity, Local.transform);
+                tempPlayer.name = string.Concat("Local_", i);
+                tempPlayer.PlayerId = i;
+                Locals.Add(tempPlayer);
+
+
+
+
+            }
+            for (int i = 0; i < 4; i++)
+            {
+                Locals[i].GetComponent<SPlayer>().type = SPlayer.TypePlayer.DEFENDER;
+            }
+            for (int i = 4; i < 8; i++)
+            {
+                Locals[i].GetComponent<SPlayer>().type = SPlayer.TypePlayer.MIDDLER;
+            }
+
+            Locals[8].GetComponent<SPlayer>().type = SPlayer.TypePlayer.ATTACKER;
+            Locals[9].GetComponent<SPlayer>().type = SPlayer.TypePlayer.ATTACKER;
+
+        }
+        else if (this.name == "Visit")
+        {
+            SPlayer tempPlayer;
+
+            for (int i = 0; i < 10; i++)
+            {
+                tempPlayer = Instantiate(OpponentPrefab, visit_position[i], Quaternion.identity, Visit.transform);
+                tempPlayer.name = string.Concat("Visit_", i);
+                tempPlayer.PlayerId = i;
+                Visitors.Add(tempPlayer);
+            }
+
+
+            for (int i = 0; i < 4; i++)
+            {
+                Visitors[i].GetComponent<SPlayer>().type = SPlayer.TypePlayer.DEFENDER;
+            }
+            for (int i = 4; i < 8; i++)
+            {
+                Visitors[i].GetComponent<SPlayer>().type = SPlayer.TypePlayer.MIDDLER;
+            }
+
+            Visitors[8].GetComponent<SPlayer>().type = SPlayer.TypePlayer.ATTACKER;
+            Visitors[9].GetComponent<SPlayer>().type = SPlayer.TypePlayer.ATTACKER;
+
+        }
+        EstaturaJugadores(Locals, Visitors, GK_LocaL, GK_Visit, 0.1f, 0.7f, 0.1f);
+        //Local
+    }
     // Update is called once per frame
     void Update()
     {

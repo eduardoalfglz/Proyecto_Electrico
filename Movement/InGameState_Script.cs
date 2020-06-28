@@ -116,6 +116,13 @@ public class InGameState_Script : MonoBehaviour
     //---------------------
     public delegate void MatchExecuted();
     public event MatchExecuted onMatchExecuted;
+
+    //GPSEnable Variables
+    //###############################################################################
+    private bool GPSEnable;
+
+    //###############################################################################
+
     //##########################################################################################
     //Variables
     //##########################################################################################
@@ -137,26 +144,6 @@ public class InGameState_Script : MonoBehaviour
     void SetVariables()
     {
 
-        //Debug.Log("Error de inicio");
-        center = GameObject.Find("Center_Field").GetComponent<Transform>();
-        sphere = GameObject.Find("soccer_ball").GetComponent<Sphere>();
-        
-
-
-        //Buscar tiempo
-
-        scorerTime = GameObject.Find("UI").GetComponentInChildren<ScorerTimeHUD>();
-
-        Local = GameObject.Find("Local").GetComponent<STeam>();
-        Visit = GameObject.Find("Visit").GetComponent<STeam>();
-
-        // search PLayers, opponents and goalkeepers
-        keeper = GameObject.FindGameObjectWithTag("GoalKeeper");
-        keeper_oponent = GameObject.FindGameObjectWithTag("GoalKeeper_Oponent");
-
-
-        Locals = Local.Locals;
-        Visitors = Visit.Visitors;
 
 
         //##########################Nodes############################
@@ -264,12 +251,45 @@ public class InGameState_Script : MonoBehaviour
     }
     void Start()
     {
+
+
+        //Debug.Log("Error de inicio");
+        center = GameObject.Find("Center_Field").GetComponent<Transform>();
+        sphere = GameObject.Find("soccer_ball").GetComponent<Sphere>();
+
+
+
+        //Buscar tiempo
+
+        scorerTime = GameObject.Find("UI").GetComponentInChildren<ScorerTimeHUD>();
+
+        Local = GameObject.Find("Local").GetComponent<STeam>();
+        Visit = GameObject.Find("Visit").GetComponent<STeam>();
+
+        // search PLayers, opponents and goalkeepers
+        keeper = GameObject.FindGameObjectWithTag("GoalKeeper");
+        keeper_oponent = GameObject.FindGameObjectWithTag("GoalKeeper_Oponent");
+
+
+        Locals = Local.Locals;
+        Visitors = Visit.Visitors;
+
+
+        GPSEnable = PlayerPrefs.GetInt("GPSEnable") == 1 ? true : false;
         //Set initial objects
-        SetVariables();
+        if (!GPSEnable)
+        {
+            SetVariables();
+        } else
+        {
+            //Aqui se lee el archivo por primera vez
+        }
+        
         
 
-        
-        
+
+
+
 
     }
 
@@ -280,8 +300,17 @@ public class InGameState_Script : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //
+
         Debug.Log(CurrEvent);
-        Evaluate();
+        if (!GPSEnable)
+        {
+            Evaluate();
+        } else
+        {
+            //Debug.Log(GPSEnable);
+        }
+            
     }
     /**
     *@funtion Evaluate

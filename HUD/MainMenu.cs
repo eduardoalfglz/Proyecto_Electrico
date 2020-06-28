@@ -9,7 +9,7 @@ public class MainMenu : MonoBehaviour
     public GameObject MMenu;
     public GameObject Select_team;
     public GameObject OptionsMenu;
-    
+    Toggle gpsToggle;
     
     //public GameObject EventS1;
     //public GameObject EventS2;
@@ -21,7 +21,7 @@ public class MainMenu : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+
         /*PlayerPrefs.SetInt("hp", 5);
         Music = BGmusic.GetComponent<AudioSource>();
 
@@ -41,6 +41,17 @@ public class MainMenu : MonoBehaviour
         {
             AudioSlider.GetComponent<Slider>().value = AudioListener.volume;
         }*/
+        
+        gpsToggle = GetComponentInChildren<Toggle>();
+        if (MMenu.activeSelf)
+        {
+            gpsToggle.onValueChanged.AddListener(delegate {
+                GPSValueChanged(gpsToggle);
+            });
+            PlayerPrefs.SetInt("GPSEnable", gpsToggle.isOn ? 1 : 0);
+        }
+        
+        
         
     }
 
@@ -130,4 +141,9 @@ public class MainMenu : MonoBehaviour
             QualitySettings.SetQualityLevel(0, true);
         } 
     }
+    void GPSValueChanged(Toggle change)
+    {
+        PlayerPrefs.SetInt("GPSEnable", gpsToggle.isOn ? 1 : 0);
+    }
+   
 }

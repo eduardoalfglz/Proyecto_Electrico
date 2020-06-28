@@ -18,7 +18,12 @@ public class Sphere : MonoBehaviour {
 
 
 
-    
+    //GPSEnable Variables
+    //###############################################################################
+    private bool GPSEnable;
+
+    //###############################################################################
+
     //[HideInInspector]	
     //public float fHorizontal;
     //[HideInInspector]	
@@ -56,7 +61,9 @@ public class Sphere : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
-        OutPosition = new Vector3(38, 100, 55); //Valor inicial, resetear siempre que se completen los eventos
+        GPSEnable = PlayerPrefs.GetInt("GPSEnable") == 1 ? true : false;
+        
+        OutPosition = new Vector3(38, 100, 55); //Valor inicial, resetear siempre que se completen los eventos FIXME
         // get players, joystick, InGame and Blob
         Locals = GameObject.Find("Local").GetComponent<STeam>().Locals;
         Visitors= GameObject.Find("Visit").GetComponent<STeam>().Visitors;
@@ -76,70 +83,66 @@ public class Sphere : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-
-        if (Mathf.Abs(transform.position.x) > 37.5 || Mathf.Abs(transform.position.z)> 55)
-            OutofBounds = true;
-        else
-            OutofBounds = false;
-        if (!OutofBounds)
+        if (!GPSEnable)
         {
-            if (owner != null)
+            if (Mathf.Abs(transform.position.x) > 37.5 || Mathf.Abs(transform.position.z) > 55)
+                OutofBounds = true;
+            else
+                OutofBounds = false;
+            if (!OutofBounds)
             {
-                LastTouch = this.owner;
-                //Debug.Log(owner.name);
-                transform.position = owner.transform.position + owner.transform.forward / 1.5f + owner.transform.up / 5.0f;
-                float velocity = owner.transform.forward.magnitude * 5f * Time.deltaTime;
-                
-                
-                
-                if (velocity > 0)
+                if (owner != null)
                 {
-                    transform.RotateAround(owner.transform.right, velocity * 10.0f);
-                }
+                    LastTouch = this.owner;
+                    //Debug.Log(owner.name);
+                    transform.position = owner.transform.position + owner.transform.forward / 1.5f + owner.transform.up / 5.0f;
+                    float velocity = owner.transform.forward.magnitude * 5f * Time.deltaTime;
 
 
 
-
-
-            }
-            else //FIXME: esto no permite que le quiten el balon
-            {
-
-                float ballRadius = 0.8f;
-                foreach (SPlayer item in Locals)
-                {
-                    if (Vector3.SqrMagnitude(item.transform.position - transform.position) < ballRadius)
+                    if (velocity > 0)
                     {
+                        transform.RotateAround(owner.transform.right, velocity * 10.0f);
+                    }
 
-                        this.owner = item;
+
+
+
+
+                }
+                else //FIXME: esto no permite que le quiten el balon
+                {
+
+                    float ballRadius = 0.8f;
+                    foreach (SPlayer item in Locals)
+                    {
+                        if (Vector3.SqrMagnitude(item.transform.position - transform.position) < ballRadius)
+                        {
+
+                            this.owner = item;
+                        }
+                    }
+
+                    foreach (SPlayer item in Visitors)
+                    {
+                        if (Vector3.SqrMagnitude(item.transform.position - transform.position) < ballRadius)
+                        {
+                            this.owner = item;
+                        }
                     }
                 }
 
-                foreach (SPlayer item in Visitors)
+            }
+            else
+            {
+                if (OutPosition == new Vector3(38, 100, 55))
                 {
-                    if (Vector3.SqrMagnitude(item.transform.position - transform.position) < ballRadius)
-                    {
-                        this.owner = item;
-                    }
+                    OutPosition = transform.position;   //Guarda la posición de salida del balón
+                    //Debug.Log(OutPosition);
                 }
             }
-
         }
-        else
-        {
-            if (OutPosition==new Vector3 (38, 100, 55))
-            {
-                OutPosition = transform.position;   //Guarda la posición de salida del balón
-                //Debug.Log(OutPosition);
-            }
-        }
-
-
-
-
-        //AGREGUE
-
-
+        
 
 
     }

@@ -130,6 +130,13 @@ public class SPlayer : MonoBehaviour
     public ActionNode LOOK_FOR_BALL_Node;
     public ActionNode Oclusion_Node;
 
+
+    //GPSEnable Variables
+    //###############################################################################
+    private bool GPSEnable;
+
+    //###############################################################################
+
     //Variables de control
     public Dictionary<string, bool> ControlStates;
     public List<string> Ckeys;
@@ -141,7 +148,8 @@ public class SPlayer : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        GPSEnable = PlayerPrefs.GetInt("GPSEnable") == 1 ? true : false;
+
         inGame = FindObjectOfType<InGameState_Script>();
         center = GameObject.Find("Center_Field").GetComponent<Transform>();
 
@@ -204,6 +212,13 @@ public class SPlayer : MonoBehaviour
         // para el movimiento de la cabeza de los jugadores
 
         GetComponent<Animation>().Play("rest");
+        
+        if (!GPSEnable)
+        {
+            
+        } 
+        
+
     }
 
     /**
@@ -355,31 +370,33 @@ public class SPlayer : MonoBehaviour
 
     void Update()
     {
-       
-        
-        MovePlayer();
-        if (TeamName=="Visit")  //Esta linea se utiliza para invertir ciertos valores dependiendo del equipo
-        {
-            bFirstHalf = !inGame.bFirstHalf;
-        }
-        else
-        {
-            bFirstHalf = inGame.bFirstHalf;
-        }
-        
-        RootNode.Evaluate();
-        //TestRoot.Evaluate();
 
-        if (!ControlStates["Animate"]) //Esto reactiva la animación despues de un error
+        if (!GPSEnable)
         {
-            if (ControlTimes["Reanimate"] <0f)
+            MovePlayer();
+            if (TeamName == "Visit")  //Esta linea se utiliza para invertir ciertos valores dependiendo del equipo
             {
-                ControlStates["Animate"] = true;
+                bFirstHalf = !inGame.bFirstHalf;
             }
-            ControlTimes["Reanimate"] -= Time.deltaTime;
-        }
-        for (int i = 0; i < pweights.Length; i++) { pweights[i] = weights[wkeys[i]]; } //mostrar los pesos en el inspector
+            else
+            {
+                bFirstHalf = inGame.bFirstHalf;
+            }
 
+            RootNode.Evaluate();
+            //TestRoot.Evaluate();
+
+            if (!ControlStates["Animate"]) //Esto reactiva la animación despues de un error
+            {
+                if (ControlTimes["Reanimate"] < 0f)
+                {
+                    ControlStates["Animate"] = true;
+                }
+                ControlTimes["Reanimate"] -= Time.deltaTime;
+            }
+            for (int i = 0; i < pweights.Length; i++) { pweights[i] = weights[wkeys[i]]; } //mostrar los pesos en el inspector
+
+        }
     }
 
 

@@ -3,9 +3,8 @@
     "",
     "\\AI",
     "\\AI\\Behaviors",
-    "\\AI\\BehaviorTree",
     "\\AI\\BehaviorTree\\CustomNodes"
   ],
-  "SelectedNode": "\\AI\\BehaviorTree\\Selector.cs",
+  "SelectedNode": "\\AI\\Sbehavior.cs",
   "PreviewInSolutionExplorer": false
 }
