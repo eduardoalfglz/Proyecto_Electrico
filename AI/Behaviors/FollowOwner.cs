@@ -8,6 +8,8 @@ using UnityEngine;
 public class FollowOwner : Cbehavior
 {
     Vector3 currentVelocity;
+    Vector3 centerOffset;
+    Vector3 GoalMod;
     public float agentSmoothTime = 0.6f;
     bool slowDown = false;
     /**
@@ -22,42 +24,38 @@ public class FollowOwner : Cbehavior
     **/
     public override Vector3 CalculateMove(SPlayer Player, List<Transform> context, STeam team, STeam Oteam, Sphere Ball, GameObject Goal)
     {
+        Player.Walking = false;
+        GoalMod.z = Goal.transform.position.z;
+        GoalMod.y = 0f;
+        if (Player.playerTeam.name == "Local")
+        {
+            GoalMod.x = team.local_position[Player.PlayerId].x;
+            
+        }
+        else
+        {
+            GoalMod.x = team.visit_position[Player.PlayerId].x;
+            
+        }
+        
         slowDown = false;
-        Vector3 centerOffset;
+        
         centerOffset.x = 0f;    //La posicion en x realmente no importa
         if (Ball.owner==null)
         {
             return Vector3.zero;
         }
         centerOffset.y = 0f;
-        centerOffset.z = Ball.owner.transform.position.z - Player.transform.position.z;
+        centerOffset.z = Player.transform.InverseTransformPoint(Ball.owner.transform.position).z;
         //
-        bool bFirstHalf;
-
-        if (Player.TeamName == "Local")
+        
+        if (!Player.bFirstHalf)
         {
-            bFirstHalf = Player.bFirstHalf;
-        }
-        else
-        {
-            bFirstHalf = !Player.bFirstHalf;
+            centerOffset = -centerOffset;
         }
         if (Player.type==SPlayer.TypePlayer.DEFENDER)//Si es defensor empezar a seguir cuando la distancia llega a 40
         {
-            if (bFirstHalf)
-            {
-                if (Player.transform.position.z>0)
-                {
-                    return Vector3.zero;
-                }
-            }
-            else
-            {
-                if (Player.transform.position.z < 0)
-                {
-                    return Vector3.zero;
-                }
-            }
+            
             if (centerOffset.magnitude < 40f)
             {
                 slowDown = true;
@@ -65,25 +63,26 @@ public class FollowOwner : Cbehavior
 
         }
 
-        if (Player.type == SPlayer.TypePlayer.MIDDLER && centerOffset.magnitude < 15f)//Si es mediocampista empezar a seguir cuando la distancia llega a 15
+        if (Player.type == SPlayer.TypePlayer.MIDDLER && centerOffset.magnitude < 20f)//Si es mediocampista empezar a seguir cuando la distancia llega a 15
         {
             slowDown = true;
         }
 
-        if (Player.type == SPlayer.TypePlayer.ATTACKER && centerOffset.magnitude < 2f )
+        if (Player.type == SPlayer.TypePlayer.ATTACKER && centerOffset.magnitude < 10f )
         {
             slowDown = true;
         }
         if (slowDown)
         {
+            Player.Walking = true;
+            centerOffset.x = GoalMod.x-Player.transform.position.x;
+            centerOffset.z = GoalMod.z-Player.transform.position.z;
             centerOffset /= 3;
-            agentSmoothTime = 0.9f;
-            centerOffset = Vector3.Lerp(centerOffset, Vector3.zero, agentSmoothTime);
             return centerOffset.normalized;
         }
 
 
-        Debug.Log("Error de delantero");
+        
 
         //centerOffset = centerOffset.normalized*Player.MAXSPEED;
         //centerOffset = Vector3.SmoothDamp(Player.transform.forward, centerOffset, ref currentVelocity, agentSmoothTime);

@@ -29,7 +29,7 @@ public class Avoidance : Sbehavior
         //add all points together and average
         Vector3 avoidanceMove = Vector3.zero;
         int nAvoid = 0;
-        float SquareAvoidanceRadius = 10f;
+        float SquareAvoidanceRadius = 4f;
         foreach (Transform item in context)
         {
             if (Vector3.SqrMagnitude(item.position - Player.transform.position) < SquareAvoidanceRadius)
@@ -45,6 +45,8 @@ public class Avoidance : Sbehavior
             return Vector3.zero;
 
         avoidanceMove = Vector3.SmoothDamp(Player.transform.up, avoidanceMove, ref currentVelocity, agentSmoothTime);
+        avoidanceMove.x *= 10;
+        avoidanceMove.z /= 3;
         return avoidanceMove;
     }
 }

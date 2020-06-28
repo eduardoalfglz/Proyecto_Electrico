@@ -1,0 +1,568 @@
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+using System.Xml;
+using System.IO;
+using UnityEngine.SceneManagement;
+
+public class InGameState_Script : MonoBehaviour
+{
+    public bool PlayButton;
+    private float timeb4koff = 10.0f;
+
+    public enum TypePlayer
+    {
+        DEFENDER,
+        MIDDLER,
+        ATTACKER
+    };
+
+    public enum Destination
+    {
+        Initial=0,
+        Default=1
+    }
+
+    public enum FootEvent
+    {
+        KickOff,
+        LocalGoal,
+        VisitGoal,
+        HalfTime
+    }
+
+    //Behavior Tree Nodes
+    //###############################################################################
+    public Sequence RootNode;
+    //###############################################################################
+    public Sequence FootballMatch; 
+    public Sequence KickOff_Sequence;
+    public Selector Playing;
+    public Sequence HalfTime_Secuence;
+    public Sequence Goal_Sequence; //FIXME: en el futuro puede incluir celebracion
+
+    //###############################################################################
+    Selector CustomSim; //Para uso futuro
+    //###############################################################################
+
+
+    //Action nodes
+    //###############################################################################
+    public ActionNode PLAYING_Node;
+	public ActionNode PREPARE_TO_KICK_OFF_Node;
+	public ActionNode KICK_OFF_Node;
+	public ActionNode GOAL_Node;
+	public ActionNode THROW_IN_Node;
+	public ActionNode THROW_IN_CHASING_Node;
+	public ActionNode THROW_IN_DOING_Node;
+	public ActionNode THROW_IN_DONE_Node;
+	public ActionNode CORNER_Node;
+	public ActionNode CORNER_CHASING_Node;
+	public ActionNode CORNER_DOING_Node;
+	public ActionNode CORNER_DOING_2_Node;
+	public ActionNode CORNER_DONE_Node;
+	public ActionNode GOAL_KICK_Node;
+	public ActionNode GOAL_KICK_RUNNING_Node;
+	public ActionNode GOAL_KICK_KICKING_Node;
+	public ActionNode Medio_Tiempo_Node;
+	public ActionNode Cambio_Cancha_Node;
+	public ActionNode FIN_Node;
+
+    //###############################################################################
+    List<SPlayer> Locals = new List<SPlayer>();
+    STeam Local;
+    
+    List<SPlayer> Visitors = new List<SPlayer>();
+    STeam Visit;
+    private GameObject keeper;
+    private GameObject keeper_oponent;
+    
+    public GameObject goalKeeperPrefab;
+    //------------------
+    //Varibles de control
+    public int score_local = 0;
+    public int score_visiting = 0;
+    [HideInInspector]
+    public bool bFirstHalf = true;
+    
+
+
+    public FootEvent CurrEvent = FootEvent.KickOff;
+    
+    //---------------------
+    public delegate void MatchExecuted();
+    public event MatchExecuted onMatchExecuted;
+    //##########################################################################################
+    //Variables
+    //##########################################################################################
+    private Transform center;
+    private Sphere sphere;
+    private ScorerTimeHUD scorerTime;
+
+
+
+
+
+    
+
+    
+    // Use this for initialization
+    void SetVariables()
+    {
+
+        //Debug.Log("Error de inicio");
+        center = GameObject.Find("Center_Field").GetComponent<Transform>();
+        sphere = GameObject.Find("soccer_ball").GetComponent<Sphere>();
+        
+
+
+        //Buscar tiempo
+
+        scorerTime = GameObject.Find("UI").GetComponentInChildren<ScorerTimeHUD>();
+
+        Local = GameObject.Find("Local").GetComponent<STeam>();
+        Visit = GameObject.Find("Visit").GetComponent<STeam>();
+
+        // search PLayers, opponents and goalkeepers
+        keeper = GameObject.FindGameObjectWithTag("GoalKeeper");
+        keeper_oponent = GameObject.FindGameObjectWithTag("GoalKeeper_Oponent");
+
+
+        Locals = Local.Locals;
+        Visitors = Visit.Visitors;
+
+
+        //##########################Nodes############################
+        PLAYING_Node=new ActionNode(PLAYING);
+        PREPARE_TO_KICK_OFF_Node=new ActionNode(PREPARE_TO_KICK_OFF);
+        KICK_OFF_Node=new ActionNode(KICK_OFF);
+        GOAL_Node=new ActionNode(GOAL);
+        THROW_IN_Node=new ActionNode(THROW_IN);
+        THROW_IN_CHASING_Node=new ActionNode(THROW_IN_CHASING);
+        THROW_IN_DOING_Node=new ActionNode(THROW_IN_DOING);
+        THROW_IN_DONE_Node=new ActionNode(THROW_IN_DONE);
+        CORNER_Node=new ActionNode(CORNER);
+        CORNER_CHASING_Node=new ActionNode(CORNER_CHASING);
+        CORNER_DOING_Node=new ActionNode(CORNER_DOING);
+        CORNER_DOING_2_Node=new ActionNode(CORNER_DOING_2);
+        CORNER_DONE_Node=new ActionNode(CORNER_DONE);
+        GOAL_KICK_Node=new ActionNode(GOAL_KICK);
+        GOAL_KICK_RUNNING_Node=new ActionNode(GOAL_KICK_RUNNING);
+        GOAL_KICK_KICKING_Node=new ActionNode(GOAL_KICK_KICKING);
+        Medio_Tiempo_Node=new ActionNode(Medio_Tiempo);
+        Cambio_Cancha_Node=new ActionNode(Cambio_Cancha);
+        FIN_Node=new ActionNode(FIN);
+
+        //---------------------------Sequence-----------------------
+        KickOff_Sequence = new Sequence(new List<Node> {
+            PREPARE_TO_KICK_OFF_Node,
+            KICK_OFF_Node,
+        });
+        HalfTime_Secuence = new Sequence(new List<Node> {
+            Medio_Tiempo_Node,
+            Cambio_Cancha_Node,
+        });
+
+        RootNode = new Sequence(new List<Node> {
+            KickOff_Sequence,
+            PLAYING_Node,
+            HalfTime_Secuence,
+            
+            
+        });
+
+        
+
+    }
+    void Start()
+    {
+        //Set initial objects
+        SetVariables();
+        
+
+        
+        
+
+    }
+
+
+
+
+
+    // Update is called once per frame
+    void Update()
+    {
+
+        Evaluate();
+    }
+    /**
+    *@funtion Evaluate
+    *@brief Evalua el nodo principal y ejecuta la rutina principal del partido
+    **/
+    public void Evaluate()
+    {
+        RootNode.Evaluate();
+        StartCoroutine(Execute());
+    }
+
+    /**
+    *@funtion Execute
+    *@brief Muestra mensajes en consola del estado del partido
+    **/
+    private IEnumerator Execute()
+    {
+        Debug.Log("The AI is thinking...");
+        yield return new WaitForSeconds(0.5f);
+
+        //if (KickOff_Sequence.nodeState == NodeStates.SUCCESS)
+        //{
+        //    Debug.Log("Ya estan en la posicion inicial");
+            
+        //}
+        if (onMatchExecuted != null)
+        {
+            onMatchExecuted();
+        }
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+    //NODOS
+    //############################################################################################################################################
+    //############################################################################################################################################
+    //############################################################################################################################################
+    //############################################################################################################################################
+    //############################################################################################################################################
+
+    /**
+    *@funtion PLAYING
+    *@brief Revisa las condiciones de tiempo para el partido
+    *@return Retorna exito en caso de que termine el primer tiempo o el segundo.
+    **/
+    public NodeStates PLAYING()
+    {
+        Debug.Log("Jugando");
+        if (scorerTime.minutes <= 44 && bFirstHalf)
+        {
+
+            return NodeStates.RUNNING;
+
+        }else if (scorerTime.minutes==44 && !bFirstHalf)
+        {
+            return NodeStates.FAILURE;
+        }
+        // Se realiza cambio de media cancha.
+        if (scorerTime.minutes == 45 && bFirstHalf)
+        {
+            bFirstHalf = false;
+            return NodeStates.SUCCESS;
+
+        }
+
+        if (scorerTime.minutes >= 45 && !bFirstHalf)
+        {
+            
+            return NodeStates.RUNNING;
+
+        }else if (scorerTime.minutes >= 45 && bFirstHalf)
+        {
+            return NodeStates.RUNNING;
+        }
+        // Finaliza el juego
+        if (scorerTime.minutes == 45 && bFirstHalf)
+        {
+            bFirstHalf = true;
+            return NodeStates.SUCCESS;
+
+        }
+
+        return NodeStates.FAILURE;
+    }
+    /**
+    *@funtion PREPARE_TO_KICK_OFF
+    *@brief Mueve a los jugadores a la posicion inicial
+    *@return Retorna exito cuado los jugadores estan cerca de la posicion inicial.
+    **/
+    public NodeStates PREPARE_TO_KICK_OFF()
+    {
+        if (PREPARE_TO_KICK_OFF_Node.nodeState == NodeStates.PENDING) { scorerTime.GState = ScorerTimeHUD.GameState.KickOff; }
+        
+        //Este codigo es necesario para que una vez que el nodo tenga exito deje de ejecutarse
+        if (CurrEvent == FootEvent.KickOff && PREPARE_TO_KICK_OFF_Node.nodeState==NodeStates.SUCCESS)
+        {
+            return NodeStates.SUCCESS;
+        }
+        if (CurrEvent == FootEvent.HalfTime && Cambio_Cancha_Node.nodeState == NodeStates.SUCCESS)
+        {
+            
+            return NodeStates.SUCCESS;
+        }
+        
+        
+        int wLenght = Locals[0].sbehaviors.Length + Locals[0].cbehaviors.Length;
+
+        //Nota como no esoty seguro de como funciona el behavior three esto voy a tener que cambiarlo probablemente
+        for (int i=0;i<10; i++ )
+        {
+            for (int j = 0; j < wLenght; j++)
+            {
+                Locals[i].weights[Locals[i].wkeys[j]] = 0f;
+            }
+            
+            Locals[i].weights["ReturnInit"]=1;
+            
+        }
+
+        for (int i = 0; i < 10; i++)
+        {
+            for (int j = 0; j < wLenght; j++)
+            {
+                Visitors[i].weights[Visitors[i].wkeys[j]] = 0f;
+            }
+            
+            Visitors[i].weights["ReturnInit"] = 1;
+        }
+
+        if (Local.checkDestination((int)Destination.Initial) && Visit.checkDestination((int)Destination.Initial))//Nota, es necesario hacerlo para ambos ya que cada uno tiene su equipo
+        {
+            Debug.Log("Posiciones iniciales");
+            
+            if (bFirstHalf && CurrEvent == FootEvent.LocalGoal)
+            {
+                Vector3[] temp = Local.local_init_position;
+                Local.local_init_position = Visit.visit_init_position;
+                Visit.visit_init_position = temp;
+                for (int i = 0; i < 10; i++)
+                {
+                    Local.local_init_position[i].z = -Local.local_init_position[i].z;
+                    Visit.visit_init_position[i].z = -Visit.visit_init_position[i].z;
+                }
+                
+            }
+            if (!bFirstHalf && CurrEvent==FootEvent.VisitGoal)
+            {
+                Vector3[] temp = Local.local_init_position;
+                Local.local_init_position = Visit.visit_init_position;
+                Visit.visit_init_position = temp;
+                for (int i = 0; i < 10; i++)
+                {
+                    Local.local_init_position[i].z = -Local.local_init_position[i].z;
+                    Visit.visit_init_position[i].z = -Visit.visit_init_position[i].z;
+                }
+                
+            }
+            if (bFirstHalf){CurrEvent = FootEvent.KickOff;} //Esto elimina el hecho de que el evento actual sea un goal;
+            else{CurrEvent = FootEvent.HalfTime;}
+            return NodeStates.SUCCESS;
+        }
+        return NodeStates.RUNNING;
+    }
+
+    /**
+    *@funtion KICK_OFF
+    *@brief Comprueba que el balon este en el centro, inicia el tiempo y fuerza el primer pase
+    *@return Retorna exito cuado los jugadores estan cerca de la posicion inicial.
+    **/
+    private NodeStates KICK_OFF()//Fixme: no ha sido probado
+    {
+        
+        if (KICK_OFF_Node.nodeState == NodeStates.SUCCESS)
+        {
+            return NodeStates.SUCCESS;
+        }
+
+        PlayButton= Input.GetKey(KeyCode.Space);
+
+        timeb4koff -= Time.deltaTime;
+
+        Locals[9].ControlStates["Kick_Offer"] = true;
+        if (PlayButton)
+        {
+            //Debug.Log("SE PRECIONO LA TECLA ESPACIO");
+
+
+            scorerTime.GState = ScorerTimeHUD.GameState.Playing;
+            Debug.Log("Patada inicial");
+            return NodeStates.SUCCESS;
+            
+
+        }
+        if (timeb4koff < 0)
+        {
+            scorerTime.GState = ScorerTimeHUD.GameState.Playing;
+            Debug.Log("Patada inicial");
+            return NodeStates.SUCCESS;
+            
+
+        }
+
+        
+        //sphere.owner = null;
+        sphere.gameObject.transform.position = center.position;
+        sphere.gameObject.GetComponent<Rigidbody>().drag = 0.5f;
+        
+        return NodeStates.RUNNING;
+    }
+
+    /**
+    *@funtion GOAL
+    *@brief Aumenta los marcadores cambia las posiciones de inicio y llama a prepare_kick_off
+    *@return Retorna exito cuado los jugadores estan cerca de la posicion inicial.
+    **/
+    private NodeStates GOAL()//Fixme: esto no ha sido probado
+    {
+        scorerTime.GState = ScorerTimeHUD.GameState.Stopped;
+        if (CurrEvent == FootEvent.LocalGoal)
+        {
+            if (GOAL_Node.nodeState!=NodeStates.RUNNING)//Fixme: REvisar
+            {
+                score_local++;
+            }
+            
+            
+            if (bFirstHalf)
+            {
+                Vector3[] temp = Local.local_init_position;
+                Local.local_init_position = Visit.visit_init_position;
+                Visit.visit_init_position = temp;
+                for (int i = 0; i < 10; i++)
+                {
+                    Local.local_init_position[i].z = -Local.local_init_position[i].z;
+                    Visit.visit_init_position[i].z = -Visit.visit_init_position[i].z;
+                }
+                
+            }
+            
+            return PREPARE_TO_KICK_OFF();
+        }
+        else if (CurrEvent == FootEvent.VisitGoal)
+        {
+            if (GOAL_Node.nodeState != NodeStates.RUNNING)//Fixme: REvisar
+            {
+                score_visiting++;
+            }
+            
+            if (!bFirstHalf)
+            {
+                Vector3[] temp = Local.local_init_position;
+                Local.local_init_position = Visit.visit_init_position;
+                Visit.visit_init_position = temp;
+                for (int i = 0; i < 10; i++)
+                {
+                    Local.local_init_position[i].z = -Local.local_init_position[i].z;
+                    Visit.visit_init_position[i].z = -Visit.visit_init_position[i].z;
+                }
+            }
+            
+            return PREPARE_TO_KICK_OFF();
+        }
+        return NodeStates.FAILURE;
+    }
+
+
+
+
+
+    private NodeStates THROW_IN()
+    {
+        return NodeStates.FAILURE;
+    }
+    private NodeStates THROW_IN_CHASING()
+    {
+        return NodeStates.FAILURE;
+    }
+    private NodeStates THROW_IN_DOING()
+    {
+        return NodeStates.FAILURE;
+    }
+    private NodeStates THROW_IN_DONE()
+    {
+        return NodeStates.FAILURE;
+    }
+    private NodeStates CORNER()
+    {
+        return NodeStates.FAILURE;
+    }
+
+    private NodeStates CORNER_CHASING()
+    {
+        return NodeStates.FAILURE;
+    }
+
+    private NodeStates CORNER_DOING()
+    {
+        return NodeStates.FAILURE;
+    }
+
+    private NodeStates CORNER_DOING_2()
+    {
+        return NodeStates.FAILURE;
+    }
+
+    private NodeStates CORNER_DONE()
+    {
+        return NodeStates.FAILURE;
+    }
+
+    private NodeStates GOAL_KICK()
+    {
+        return NodeStates.FAILURE;
+    }
+
+    private NodeStates GOAL_KICK_RUNNING()
+    {
+        return NodeStates.FAILURE;
+    }
+
+    private NodeStates GOAL_KICK_KICKING()
+    {
+        return NodeStates.FAILURE;
+    }
+
+
+    private NodeStates Medio_Tiempo()
+    {
+        
+        Debug.Log("Halftime");
+        scorerTime.GState = ScorerTimeHUD.GameState.HalfTime;
+        return NodeStates.SUCCESS;
+        
+       
+    }
+
+    private NodeStates Cambio_Cancha()
+    {
+        //Este codigo es necesario para que una vez que el nodo tenga exito deje de ejecutarse
+        if (Cambio_Cancha_Node.nodeState == NodeStates.SUCCESS)
+        {
+            return NodeStates.SUCCESS;
+        }
+        //Esto se ejecuta una unica vez
+        if (Cambio_Cancha_Node.nodeState == NodeStates.PENDING)
+        {
+            Vector3[] temp = Local.local_init_position;
+            Local.local_init_position = Visit.visit_init_position;
+            Visit.visit_init_position = temp;
+        }
+
+        CurrEvent = FootEvent.HalfTime;
+        return PREPARE_TO_KICK_OFF();
+    }
+
+
+
+    private NodeStates FIN()
+    {
+        return NodeStates.FAILURE;
+    }
+    
+}

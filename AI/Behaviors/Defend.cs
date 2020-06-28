@@ -8,6 +8,9 @@ using UnityEngine;
 public class Defend : Cbehavior
 {
     float Timeb4changeAtt=0;
+    float offset=0;
+    float TempValue;        //Variable temporal de la diferencia más pequeña
+    bool AttackingSide;     //Bandera que indica si el jugadore esta en la mitad de ataque
     SPlayer attacker;
     /**
     *@funtion CalculateMove
@@ -21,7 +24,9 @@ public class Defend : Cbehavior
     **/
     public override Vector3 CalculateMove(SPlayer Player, List<Transform> context, STeam team, STeam Oteam, Sphere Ball, GameObject Goal)
     {
+        //Debug.Log("Defending");
         Vector3 centerOffset=Vector3.zero;
+        //attacker = null;
         List<SPlayer> opponents;
         if (Ball.owner!=null)
         {
@@ -35,45 +40,88 @@ public class Defend : Cbehavior
             }
         }
         
-        if (Player.TeamName == "Local")
+        if (Player.bFirstHalf)
         {
-            opponents = Oteam.Visitors;
+
+            if (Player.transform.position.z > 0f)
+                AttackingSide = true;
+            else
+                AttackingSide = false;
+            offset = -3f;
         }
         else
         {
-            opponents = Oteam.Locals;
+            if (Player.transform.position.z < 0f)
+                AttackingSide = true;
+            else
+                AttackingSide =false;
+            offset = 3f;
         }
+        if (Player.TeamName == "Local")
+            opponents = Oteam.Visitors;            
+        else
+            opponents = Oteam.Locals;
+
+
+
         if (Timeb4changeAtt<=0)
         {
-            Timeb4changeAtt = 3f;
-            Vector3 tempOffset=new Vector3(0,15,0);
-            for (int i = 0; i < opponents.Count; i++)
+            Timeb4changeAtt = 2f;
+            Vector3 tempOffset=new Vector3(0,10,0);
+            
+            if (!AttackingSide)
             {
-                if ((opponents[i].transform.position-Player.transform.position).magnitude<tempOffset.magnitude)
+                //Debug.Log("Defendiendo");
+                for (int i = 0; i < opponents.Count; i++)
                 {
-                    centerOffset.y = 0f;
-                    centerOffset.x = opponents[i].transform.position.x - Player.transform.position.x;
-                    centerOffset.z = opponents[i].transform.position.z - Player.transform.position.z;
-                    if (opponents[i]==Ball.owner)//Prioridad al dueno del balon
+                    //Debug.Log(opponents[i].CheckAround(3));
+                    if (opponents[i].CheckAround(3) <= 2) //Checks for other defenders near the attacker
                     {
-                        centerOffset /= 10;
+                        TempValue = (opponents[i].transform.position - Player.transform.position).magnitude;
+                        if (opponents[i] == Ball.owner)//Prioridad al dueno del balon
+                        {
+                            TempValue /= 2;
+                        }
+                        if (opponents[i].PlayerId==Player.PlayerId)
+                        {
+                            TempValue /= 4;
+                        }
+                        if (TempValue < tempOffset.magnitude)
+                        {
+                            centerOffset.y = 0f;
+                            centerOffset.x = opponents[i].transform.position.x - Player.transform.position.x;
+                            centerOffset.z = opponents[i].transform.position.z - Player.transform.position.z;
+
+                            tempOffset = centerOffset;
+                            attacker = opponents[i];
+                        }
                     }
-                    attacker = opponents[i];
+
                 }
+                
             }
 
+            //Debug.Log(attacker);
             if (centerOffset.magnitude==0)
             {
-                attacker = null;
+                
                 if (Player.playerTeam.name == "Local")
                 {
                     centerOffset.x = team.local_position[Player.PlayerId].x - Player.transform.position.x;
                     centerOffset.z = team.local_position[Player.PlayerId].z - Player.transform.position.z;
+                    if (centerOffset.magnitude < 2f)
+                    {
+                        centerOffset = Vector3.zero;
+                    }
                 }
                 else
                 {
                     centerOffset.x = team.visit_position[Player.PlayerId].x - Player.transform.position.x;
                     centerOffset.z = team.visit_position[Player.PlayerId].z - Player.transform.position.z;
+                    if (centerOffset.magnitude < 2f)
+                    {
+                        centerOffset = Vector3.zero;
+                    }
                 }
             }
 
@@ -85,7 +133,7 @@ public class Defend : Cbehavior
             {
                 centerOffset.y = 0f;
                 centerOffset.x = attacker.transform.position.x - Player.transform.position.x;
-                centerOffset.z = attacker.transform.position.z - Player.transform.position.z;
+                centerOffset.z = attacker.transform.position.z - Player.transform.position.z +offset;
 
             }
             else
@@ -94,16 +142,25 @@ public class Defend : Cbehavior
                 {
                     centerOffset.x = team.local_position[Player.PlayerId].x - Player.transform.position.x;
                     centerOffset.z = team.local_position[Player.PlayerId].z - Player.transform.position.z;
+                    if (centerOffset.magnitude < 2f)
+                    {
+                        centerOffset = Vector3.zero;
+                    }
                 }
                 else
                 {
                     centerOffset.x = team.visit_position[Player.PlayerId].x - Player.transform.position.x;
                     centerOffset.z = team.visit_position[Player.PlayerId].z - Player.transform.position.z;
+                    if (centerOffset.magnitude < 2f)
+                    {
+                        centerOffset = Vector3.zero;
+                    }
                 }
             }
-            
-            
+
+
         }
+        //Debug.Log(centerOffset,Player);
         return centerOffset.normalized;
     }
 

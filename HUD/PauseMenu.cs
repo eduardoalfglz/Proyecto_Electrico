@@ -38,7 +38,7 @@ public class PauseMenu : MonoBehaviour
         PauseMenuGUI = transform.Find("pause").gameObject;
         CameraMenuGUI = transform.Find("CameraMenu").gameObject;
         RecordMenuGUI = transform.Find("recordmenu").gameObject;
-        
+        Time.timeScale = PlayerPrefs.GetFloat("TimeScale", 1);
         SR = GameObject.FindObjectOfType(typeof(ScreenRecording)) as ScreenRecording;
     }
     void Update()
@@ -62,7 +62,7 @@ public class PauseMenu : MonoBehaviour
     {
         PauseMenuGUI.SetActive(false);
         Debug.Log(PlayerPrefs.GetFloat("TimeScale"));
-        Time.timeScale = PlayerPrefs.GetFloat("TimeScale");
+        Time.timeScale = PlayerPrefs.GetFloat("TimeScale",1);
         //Modificar para agregar varias velocidades
         GamePaused = false;
 
@@ -158,21 +158,20 @@ public class PauseMenu : MonoBehaviour
         {
             Debug.Log("Seleccion 1");
             PlayerPrefs.SetFloat("TimeScale", 1);
-            //Time.timeScale = 0f;
-            //QualitySettings.SetQualityLevel(5, true);
+            
         }
         else if (Selection == 1)
         {
-            Debug.Log("Seleccion 5");
-            PlayerPrefs.SetFloat("TimeScale", 0.5f); //FIxme, para debuggear nada mas, volver a poner en 5
+            Debug.Log("Seleccion 2");
+            PlayerPrefs.SetFloat("TimeScale", 2f); 
         }
         else if (Selection == 2)
         {
-            PlayerPrefs.SetFloat("TimeScale", 10);
+            PlayerPrefs.SetFloat("TimeScale", 5);
         }
         else if (Selection == 3)
         {
-            PlayerPrefs.SetFloat("TimeScale", 50);
+            PlayerPrefs.SetFloat("TimeScale", 10);
         }
     }
     /*public void Restart()

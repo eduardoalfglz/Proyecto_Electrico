@@ -18,7 +18,11 @@ public class ReturnDefault : Cbehavior
             centerOffset.x = team.visit_position[Player.PlayerId].x - Player.transform.position.x;
             centerOffset.z = team.visit_position[Player.PlayerId].z - Player.transform.position.z;
         }
-        
+        if (centerOffset.magnitude < 2f)
+        {
+            centerOffset = Vector3.zero;
+        }
+
 
         return centerOffset.normalized;
     }

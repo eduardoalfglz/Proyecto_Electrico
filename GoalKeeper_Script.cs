@@ -50,16 +50,38 @@ public class GoalKeeper_Script : MonoBehaviour {
 	public List<string> listPosicion;
 	private ScorerTimeHUD scorerTime;
 
-	private GameObject[] players;
-	private GameObject[] opponents;
+    [HideInInspector]
+    public STeam playerTeam;
+    public List<SPlayer> Teammates;
+    [HideInInspector]
+    public string TeamName;
 
-	//-----------------------------------------------
+    [HideInInspector]
+    public STeam opponentTeam;
+    public List<SPlayer> Opponents;
 
-	// Use this for initialization
-	void Start () {
+    //-----------------------------------------------
+
+    // Use this for initialization
+    void Start () {
+        if (this.transform.name == "GoalKeeper_Local")
+        {
+            TeamName = "Local";
+            playerTeam = GameObject.Find("Local").GetComponent<STeam>();
+            opponentTeam = GameObject.Find("Visit").GetComponent<STeam>();
+            Opponents = opponentTeam.Visitors;
+            Teammates = playerTeam.Locals;
+        }
+        else
+        {
+            TeamName = "Visit";
+            playerTeam = GameObject.Find("Visit").GetComponent<STeam>();
+            opponentTeam = GameObject.Find("Local").GetComponent<STeam>();
+            Opponents = opponentTeam.Locals;
+            Teammates = playerTeam.Visitors;
+        }
         scorerTime = GameObject.FindObjectOfType(typeof(ScorerTimeHUD)) as ScorerTimeHUD;
-        players = GameObject.FindGameObjectsWithTag("PlayerTeam1");   //rojos
-		opponents = GameObject.FindGameObjectsWithTag("OpponentTeam");  //Amarillos
+        
 		listPosicion= new List<string>();
 
 		initial_Position = transform.position;

@@ -11,7 +11,13 @@ public class SPlayer : MonoBehaviour
 {
     [HideInInspector]
     public int PlayerId;
-
+    public enum SimulationType
+    {
+        Corner = 0,
+        ThrowIn = 1,
+        Oclusion = 2,
+        Regular = 3,
+    };
     public enum TypePlayer
     {
         DEFENDER,
@@ -65,7 +71,7 @@ public class SPlayer : MonoBehaviour
 
     //
     //capacidad de resistencia física
-    private bool Walking = false;
+    public bool Walking = false;
     private const float STAMINA_DIVIDER = 64.0f;
     private const float STAMINA_MIN = 0.5f;
     private const float STAMINA_MAX = 1.0f;
@@ -75,7 +81,7 @@ public class SPlayer : MonoBehaviour
 
     [Range(1f, 100f)]
     public float MAXSPEED = 5f;
-    public float WalkingSPEED = 2f;
+    public float WSPEED = 3f;
 
 
 
@@ -117,10 +123,12 @@ public class SPlayer : MonoBehaviour
     public ActionNode PICK_BALL_Node;
     public ActionNode CHANGE_DIRECTION_Node;
     public ActionNode CORNER_KICK_Node;
+    public ActionNode ThrowIn_Node;
     public ActionNode TACKLE_Node;
     public ActionNode Medio_Tiempo_Node;
     public ActionNode Celebration_Node;
     public ActionNode LOOK_FOR_BALL_Node;
+    public ActionNode Oclusion_Node;
 
     //Variables de control
     public Dictionary<string, bool> ControlStates;
@@ -141,7 +149,7 @@ public class SPlayer : MonoBehaviour
         //Inicializacion de variables de comportamiento
         sbehaviors = new Sbehavior[6];
 
-        cbehaviors = new Cbehavior[7];
+        cbehaviors = new Cbehavior[8];
         weights = new Dictionary<string, float>();
         pweights = new float[sbehaviors.Length + cbehaviors.Length];
         wkeys = new string[sbehaviors.Length + cbehaviors.Length];
@@ -248,6 +256,9 @@ public class SPlayer : MonoBehaviour
         cbehaviors[6] = ScriptableObject.CreateInstance("Defend") as Cbehavior;
         weights.Add("Defend", 0.1f);
         wkeys[sbehaviors.Length + 6] = "Defend";
+        cbehaviors[7] = ScriptableObject.CreateInstance("CornerSetup") as Cbehavior;
+        weights.Add("CornerSetup", 0.1f);
+        wkeys[sbehaviors.Length + 7] = "CornerSetup";
 
 
 
@@ -267,11 +278,12 @@ public class SPlayer : MonoBehaviour
         PICK_BALL_Node = new ActionNode(PICK_BALL);
         CHANGE_DIRECTION_Node = new ActionNode(CHANGE_DIRECTION);
         CORNER_KICK_Node = new ActionNode(CORNER_KICK);
+        ThrowIn_Node = new ActionNode(ThrowIn);        
         TACKLE_Node = new ActionNode(TACKLE);
         Medio_Tiempo_Node = new ActionNode(Medio_Tiempo);
         Celebration_Node = new ActionNode(Celebration);
         LOOK_FOR_BALL_Node= new ActionNode(LOOK_FOR_BALL);
-
+        Oclusion_Node = new ActionNode(Oclusion);
         //Behavior Tree Nodes
         //###############################################################################
         FootballMatch = new Inverter(KICK_OFFER_Node);
@@ -292,7 +304,10 @@ public class SPlayer : MonoBehaviour
 
 
         RootNode = new Selector(new List<Node> {
+            Oclusion_Node,
             FootballMatch,
+            CORNER_KICK_Node,
+            ThrowIn_Node,
             Attack,
             LOOK_FOR_BALL_Node,
             Deffend,
@@ -333,18 +348,36 @@ public class SPlayer : MonoBehaviour
         Tkeys.Add("Tackle");
         ControlTimes.Add("Pass", 0f);
         Tkeys.Add("Pass");
+        ControlTimes.Add("Reanimate", 0f);
+        Tkeys.Add("Reanimate");
     }
 
 
     void Update()
     {
-
+       
+        
         MovePlayer();
-        bFirstHalf = inGame.bFirstHalf;
+        if (TeamName=="Visit")  //Esta linea se utiliza para invertir ciertos valores dependiendo del equipo
+        {
+            bFirstHalf = !inGame.bFirstHalf;
+        }
+        else
+        {
+            bFirstHalf = inGame.bFirstHalf;
+        }
+        
         RootNode.Evaluate();
         //TestRoot.Evaluate();
 
-        
+        if (!ControlStates["Animate"]) //Esto reactiva la animación despues de un error
+        {
+            if (ControlTimes["Reanimate"] <0f)
+            {
+                ControlStates["Animate"] = true;
+            }
+            ControlTimes["Reanimate"] -= Time.deltaTime;
+        }
         for (int i = 0; i < pweights.Length; i++) { pweights[i] = weights[wkeys[i]]; } //mostrar los pesos en el inspector
 
     }
@@ -362,7 +395,7 @@ public class SPlayer : MonoBehaviour
         if (Walking)
         {
             move *= staminaTemp;
-            move *= WalkingSPEED;
+            move *= WSPEED;
             GetComponent<Animation>()["running"].speed = 0.7f;
         }
         else
@@ -387,11 +420,15 @@ public class SPlayer : MonoBehaviour
     {
         if (sphere.owner==this)
         {
-            Debug.Log(ControlStates["Animate"]);
+            //Debug.Log(ControlStates["Animate"]);
         }
-        VelocityXZ = new Vector3(velocity.x, 0, velocity.z);
-
-        if (VelocityXZ.magnitude <= 1)
+        VelocityXZ = Vector3.Lerp(VelocityXZ, velocity, 0.5f); ;
+        VelocityXZ.y = 0f;
+        //if (MOVE_AUTOMATIC_DEFFEND_Node.nodeState == NodeStates.RUNNING)
+        //{
+        //    Debug.Log(VelocityXZ.magnitude, this);
+        //}
+        if (VelocityXZ.magnitude <= 2f)
         {
             Vector3 centerOffset;
             centerOffset.x = sphere.transform.position.x - transform.position.x;
@@ -410,7 +447,7 @@ public class SPlayer : MonoBehaviour
             GetComponent<Animation>()["running"].speed *= (VelocityXZ.magnitude / MAXSPEED);
             if (Walking)
             {
-                stamina -= 0.5f * Time.deltaTime;
+                stamina -= 0.01f * Time.deltaTime;
                 float staminaTemp = Mathf.Clamp((stamina / STAMINA_DIVIDER), STAMINA_MIN, STAMINA_MAX);
                 GetComponent<Animation>()["running"].speed *= staminaTemp;
             }
@@ -426,10 +463,10 @@ public class SPlayer : MonoBehaviour
                 GetComponent<Animation>().Play("running");
             }
             Quaternion PRotation = transform.rotation;
-            transform.forward = Vector3.Lerp(transform.forward, VelocityXZ, 0.8f);
+            transform.forward = Vector3.Lerp(transform.forward, VelocityXZ, 0.5f);
             
                 
-            transform.rotation = Quaternion.Slerp(PRotation, transform.rotation, 0.5f);
+            transform.rotation = Quaternion.Slerp(PRotation, transform.rotation, 0.1f);
 
             //}
 
@@ -527,6 +564,10 @@ public class SPlayer : MonoBehaviour
     **/
     private NodeStates KICK_OFFER()
     {
+        if (inGame.CurrEvent==InGameState_Script.FootEvent.Corner || inGame.CurrEvent == InGameState_Script.FootEvent.ThrowIn) //Fixme Esto se debe revisar
+        {
+            return NodeStates.SUCCESS;
+        }
         if (KICK_OFFER_Node.nodeState==NodeStates.SUCCESS)
         {
             ControlStates["Kick_Offer"] = false;
@@ -585,6 +626,16 @@ public class SPlayer : MonoBehaviour
     **/
     private NodeStates CHECK_ATTACK()
     {
+        foreach (SPlayer item in Teammates)
+        {
+            if (item.PASSING_Node.nodeState==NodeStates.RUNNING)
+            {
+                return CHECK_ATTACK_Node.nodeState;
+            }
+        }
+        
+      
+        //Tarda 2 s en cambiar de modo ataque a modo defensa y vice versa
         List<SPlayer> temp;
         if (TeamName == "Local")
             temp = playerTeam.Locals;
@@ -597,8 +648,11 @@ public class SPlayer : MonoBehaviour
                 //
                 return NodeStates.SUCCESS;
         }
-        
+
         return NodeStates.FAILURE;
+        
+
+
     }
 
     private NodeStates GO_ORIGIN()
@@ -623,6 +677,7 @@ public class SPlayer : MonoBehaviour
             //Debug.Log(sphere.owner);
             GetComponent<Animation>().Play("pass");
             ControlStates["Animate"] = false;
+            ControlTimes["Reanimate"] = 4f;
         }
         
         transform.position = new Vector3(transform.position.x, 0.255f, transform.position.z); //Linea para devolver el jugado a la altura deseada
@@ -658,17 +713,21 @@ public class SPlayer : MonoBehaviour
                 }
                 foreach (SPlayer go in team)
                 {
-                    if (go != gameObject)
+                    if (go != this)
                     {
-                        Vector3 relativePos = transform.InverseTransformPoint(go.transform.position);
+                        Vector3 relativePos = go.transform.position-transform.position;
 
+                        if (!bFirstHalf)
+                        {
+                            relativePos.z = -relativePos.z;
+                        }
                         float magnitude = relativePos.magnitude;
                         float direction = Mathf.Abs(relativePos.x);
                         
 
                         if (relativePos.z > 0.0f)
-                            relativePos/=10f;       //Dar prioridad a los jugadores adelante del que tiene el balon
-                        if (relativePos.z > 0.0f && direction < 15.0f && (magnitude + direction < bestCandidateCoord))
+                            relativePos/=5f;       //Dar prioridad a los jugadores adelante del que tiene el balon
+                        if (direction < 15.0f && (magnitude + direction < bestCandidateCoord))
                         {
                             bestCandidateCoord = magnitude + direction;
                             bestCandidatePlayer = go;   //mejor jugador candidato	
@@ -686,10 +745,9 @@ public class SPlayer : MonoBehaviour
             }
 
 
-                
-            
-            //WORKINGHERE
 
+
+            //WORKINGHERE
             if (bestCandidateCoord != 1000.0f)
             {
 
@@ -698,6 +756,13 @@ public class SPlayer : MonoBehaviour
                 Vector3 directionBall = (bestCandidatePlayer.transform.position - transform.position).normalized;
                 float distanceBall = (bestCandidatePlayer.transform.position - transform.position).magnitude * 1.4f;
                 distanceBall = Mathf.Clamp(distanceBall, 15.0f, 40.0f);//Delimita el valor entre min y max
+                if (KICK_OFFER_Node.nodeState!=NodeStates.RUNNING)
+                {
+                    distanceBall = UnityEngine.Random.Range(distanceBall - 3f, distanceBall + 3f);
+                    directionBall.x = UnityEngine.Random.Range(directionBall.x - 2f, directionBall.x + 2f);
+                    directionBall.z = UnityEngine.Random.Range(directionBall.z - 2f, directionBall.z + 2f);
+                }
+                    
                 sphere.gameObject.GetComponent<Rigidbody>().velocity = new Vector3(directionBall.x * distanceBall, distanceBall / 5.0f, directionBall.z * distanceBall);
                 sphere.owner = null;
                 
@@ -731,6 +796,7 @@ public class SPlayer : MonoBehaviour
     {
 
         ControlStates["Animate"] = false;
+        ControlTimes["Reanimate"] = 4f;
         if (GetComponent<Animation>().IsPlaying("shoot") == false)
         {
             ControlStates["Animate"] = true;
@@ -764,7 +830,6 @@ public class SPlayer : MonoBehaviour
             }
 
         }
-        Debug.Log("Shoot");
         return NodeStates.RUNNING;
     }
 
@@ -785,16 +850,17 @@ public class SPlayer : MonoBehaviour
         }
         if (PASSING_Node.nodeState!=NodeStates.SUCCESS)
         {
-            Debug.Log("Pasando");
+            //Debug.Log("Pasando");
             PASSING();
             if(PASSING_Node.nodeState == NodeStates.SUCCESS) { return NodeStates.RUNNING; }
             else { return PASSING_Node.nodeState; }
         }
-        
+        ControlStates["Animate"] = true;
         if (sphere.owner == this)
         {
             ControlTimes["Tackle"] = 5f;      //Esperar despues de perder el balon 
             //Debug.Log("Dueño", this);
+            
             for (int j = 0; j < weights.Count; j++)
             {
                 weights[wkeys[j]] = 0f;
@@ -820,7 +886,8 @@ public class SPlayer : MonoBehaviour
             }
             ControlTimes["Pass"] -= Time.deltaTime;
             playerTeam.ControlTimes["Pass"] -= Time.deltaTime;
-            if (OnAreaCheck())
+           
+            if (OnAreaCheck() || CheckDefInfront()==0)
             {
                 //Debug.Log("EnArea");
                 ControlStates["OnArea"] = true;
@@ -843,7 +910,7 @@ public class SPlayer : MonoBehaviour
             weights["StayInStadium"] = 1f;
             weights["FollowBall"] = 0.05f;
             weights["AvoidOpponents"] = 1f;
-            weights["FollowOwner"] = 2f;
+            weights["FollowOwner"] = 1f;
             weights["FollowGoal"] = 0.5f;
             return NodeStates.RUNNING;
         }
@@ -859,7 +926,7 @@ public class SPlayer : MonoBehaviour
     **/
     private NodeStates MOVE_AUTOMATIC_DEFFEND()
     {
-        //return NodeStates.PENDING;        NOTE: for testing
+        //return NodeStates.PENDING;        //NOTE: for testing
         if (TACKLE_Node.nodeState==NodeStates.RUNNING)
         {
             return NodeStates.SUCCESS;
@@ -869,14 +936,15 @@ public class SPlayer : MonoBehaviour
             weights[wkeys[j]] = 0f;
         }
 
-        weights["Avoidance"] = 3f;
+        weights["Avoidance"] = 1f;
         weights["StayInStadium"] = 1f;
-        weights["Defend"] = 1f;
+        weights["Defend"] = 4f;
         //weights["FollowGoal"] = 2f;
         //weights["AvoidOpponents"] = 1f;
         if (CloseToball(4f) && ControlTimes["Tackle"] <= 0)
         {
             ControlStates["Animate"] = false;
+            ControlTimes["Reanimate"] = 4f;
             GetComponent<Animation>().Play("tackle");
             for (int j = 0; j < weights.Count; j++)
             {
@@ -901,6 +969,7 @@ public class SPlayer : MonoBehaviour
     private NodeStates TACKLE()
     {
         ControlStates["Animate"] = false;
+        ControlTimes["Reanimate"] = 4f;
         if (GetComponent<Animation>().IsPlaying("tackle") == true)
         {
             if ((sphere.transform.position - transform.position).magnitude<0.5f)
@@ -948,17 +1017,161 @@ public class SPlayer : MonoBehaviour
         return NodeStates.FAILURE;
     }
 
-
+    /**
+    *@funtion CORNER_KICK
+    *@brief Ejecución de Corner
+    *@return 
+    **/
     private NodeStates CORNER_KICK()
     {
+        if (inGame.CurrEvent==InGameState_Script.FootEvent.Corner)
+        {
+            if (Mathf.Abs(sphere.transform.position.x)== 37 && inGame.TimeInAction<0) //El Corner se ha ajustado
+            {
+                if ((transform.position-sphere.transform.position).magnitude<5)
+                {
+                    Debug.Log("Realizando Tiro de esquina");
+                    ControlStates["Animate"] = false;
+                    ControlTimes["Reanimate"] = 4f;
+                    GetComponent<Animation>().Play("shoot");
+                }
+                
+                
+
+                
+                if (GetComponent<Animation>()["shoot"].normalizedTime > 0.3f)
+                {
+                    sphere.owner = null;
+                    if (sphere.transform.position.z>0)
+                    {
+                        
+                        float valueRndY = UnityEngine.Random.Range(4.0f, 10.0f);
+                        sphere.gameObject.GetComponent<Rigidbody>().velocity = new Vector3(transform.forward.x * 30.0f, valueRndY, transform.forward.z * 30.0f);   //FIXME: Se Puede mejorar
+                        //--------------------------------------------------------------------
+                    }
+
+                    else
+                    {
+                        
+                        float valueRndY = UnityEngine.Random.Range(4.0f, 10.0f);
+                        sphere.GetComponent<Rigidbody>().velocity = new Vector3(transform.forward.x * 30.0f, valueRndY, transform.forward.z * 30.0f);
+                    }
+
+                }
+
+                return NodeStates.SUCCESS;
+            }
+
+
+            
+
+            return NodeStates.RUNNING;
+        }
+
         return NodeStates.FAILURE;
     }
+    /**
+    *@funtion ThrowIn
+    *@brief Ejecución de Corner
+    *@return 
+    **/
+    private NodeStates ThrowIn()
+    {
+        
+        if (inGame.CurrEvent == InGameState_Script.FootEvent.ThrowIn)
+        {
+            if ( inGame.TimeInAction < 0.5) //El Corner se ha ajustado
+            {
+                Debug.Log("jdjdjdjd");
+                if ((transform.position - sphere.transform.position).magnitude < 5 && ControlStates["Animate"])
+                {
+                    Debug.Log("Pase");
+                    ControlStates["Animate"] = false;
+                    ControlTimes["Reanimate"] = 2f;
+                    GetComponent<Animation>().Play("saque_banda");
+                }
 
-    
+
+
+
+                if (GetComponent<Animation>()["saque_banda"].normalizedTime > 0.1f)
+                {
+                    sphere.owner = null;
+
+
+
+                    //sphere.inputPlayer = bestCandidatePlayer;
+                    //El balon va hacia el candidato
+                    Vector3 directionBall;
+                    float distanceBall;
+                    if (transform.position.x<0)
+                    {
+                        directionBall = (new Vector3(transform.position.x+5,1,transform.position.z-5) - transform.position).normalized;
+                        distanceBall = (new Vector3(transform.position.x + 5, 1, transform.position.z - 5) - transform.position).magnitude * 1.4f;
+                    }
+                    else
+                    {
+                        directionBall = (new Vector3(transform.position.x - 5, 1, transform.position.z - 5) - transform.position).normalized;
+                        distanceBall = (new Vector3(transform.position.x - 5, 1, transform.position.z - 5) - transform.position).magnitude * 1.4f;
+                    }
+
+                    
+                    distanceBall = Mathf.Clamp(distanceBall, 15.0f, 40.0f);//Delimita el valor entre min y max
+                       
+
+                    sphere.gameObject.GetComponent<Rigidbody>().velocity = new Vector3(directionBall.x * distanceBall, distanceBall / 5.0f, directionBall.z * distanceBall);
+                    sphere.owner = null;
+
+                        
+                    //if (sphere.transform.position.z > 0)
+                    //{
+
+                    //    float valueRndY = UnityEngine.Random.Range(4.0f, 10.0f);
+                    //    sphere.gameObject.GetComponent<Rigidbody>().velocity = new Vector3(transform.forward.x * 30.0f, valueRndY, transform.forward.z * 30.0f);   //FIXME: Se Puede mejorar
+                    //    //--------------------------------------------------------------------
+                    //}
+
+                    //else
+                    //{
+
+                    //    float valueRndY = UnityEngine.Random.Range(4.0f, 10.0f);
+                    //    sphere.GetComponent<Rigidbody>().velocity = new Vector3(transform.forward.x * 30.0f, valueRndY, transform.forward.z * 30.0f);
+                    //}
+
+                }
+                inGame.CurrEvent = InGameState_Script.FootEvent.KickOff;
+                return NodeStates.SUCCESS;
+            }
+
+
+
+
+            return NodeStates.RUNNING;
+        }
+
+        return NodeStates.FAILURE;
+        
+    }
+
     private NodeStates Medio_Tiempo()
     {
         return NodeStates.FAILURE;
     }
+
+    /**
+    *@funtion Oclusion
+    *@brief Oclusion modo iddle
+    *@return 
+    **/
+    private NodeStates Oclusion()
+    {
+        if (PlayerPrefs.GetInt("SimType", (int)SimulationType.Regular) == (int)SimulationType.Oclusion)
+        {
+            return NodeStates.RUNNING;
+        }
+        return NodeStates.FAILURE;
+    }
+
 
     private NodeStates Celebration()
     {
@@ -1000,56 +1213,39 @@ public class SPlayer : MonoBehaviour
 
     public bool OnAreaCheck()
     {
-        if (TeamName=="Local")
+        
+        if (bFirstHalf)
         {
-            if (bFirstHalf)
+            if (transform.position.z >= 38)
             {
-                if (transform.position.z >= 38)
+                if (transform.position.x <=20 && transform.position.x >= -20)
                 {
-                    if (transform.position.x <=20 && transform.position.x >= -20)
-                    {
-                        return true;
-                    }   
-                }
-            }
-            else
-            {
-                if (transform.position.z <= -38)
-                {
-                    if (transform.position.x <= 20 && transform.position.x >= -20)
-                    {
-                        return true;
-                    }
-                }
+                    return true;
+                }   
             }
         }
         else
         {
-            if (!bFirstHalf)
+            if (transform.position.z <= -38)
             {
-                if (transform.position.z >= 38)
+                if (transform.position.x <= 20 && transform.position.x >= -20)
                 {
-                    if (transform.position.x <= 20 && transform.position.x >= -20)
-                    {
-                        return true;
-                    }
-                }
-            }
-            else
-            {
-                if (transform.position.z <= -38)
-                {
-                    if (transform.position.x <= 20 && transform.position.x >= -20)
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
         }
+        
           
 
         return false;
     }
+
+    /**
+    *@funtion CloseToball
+    *@brief Revisa si el jugador esta lo suficientemente cerca del balon
+    *@return True si se encuentra adentro del rango establecido
+    *@param distance Distancia del rango 
+    **/
     private bool CloseToball(float distance)
     {
         if ((transform.position - sphere.transform.position).magnitude < distance)
@@ -1058,7 +1254,30 @@ public class SPlayer : MonoBehaviour
         }
         return false;
     }
+    /**
+    *@funtion CheckAround
+    *@brief Revisa Cuantos jugadores hay adentro de un radio establecido
+    *@return Cantidad de jugadores adentro del rango
+    *@param Radius Radio del rango 
+    **/
+    public int CheckAround(float Radius)
+    {
+        int count = 0;
+        foreach (SPlayer op in Opponents)
+        {
 
+            Vector3 relativePos = transform.InverseTransformPoint(op.transform.position);
+
+            if (Mathf.Abs(relativePos.magnitude) < Radius)
+                count++;
+        }
+        return count;
+    }
+    /**
+    *@funtion CheckDefInfront
+    *@brief Revisa Cuantos defensas hay adelante del jugador actual
+    *@return Cantidad de jugadores 
+    **/
     int CheckDefInfront()
     {
 
@@ -1076,6 +1295,11 @@ public class SPlayer : MonoBehaviour
         return count;
 
     }
+    /**
+    *@funtion CheckDefInfront
+    *@brief Revisa si hay jugadores adelante del jugador actual
+    *@return True si hay jugadores
+    **/
     bool CheckTeamInfront()
     {
 
@@ -1096,7 +1320,8 @@ public class SPlayer : MonoBehaviour
     }
     bool PassDecision()
     {
-        if ((CheckTeamInfront() || CheckDefInfront() >= 7) && ControlTimes["Pass"] <= 0 && playerTeam.ControlTimes["Pass"] <= 0)
+        float decisionMaker = Random.Range(0, 100.0f);
+        if ((CheckTeamInfront() || CheckDefInfront() >= 6) && ControlTimes["Pass"] <= 0 && playerTeam.ControlTimes["Pass"] <= 0 && decisionMaker<1)
         {
             return true;
         }

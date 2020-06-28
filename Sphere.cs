@@ -15,23 +15,26 @@ public class Sphere : MonoBehaviour {
 	//public Transform blobPlayerSelected;
 	public float timeToSelectAgain = 0.0f;
 	public GameObject lastCandidatePlayer;
-	
-	//[HideInInspector]	
-	//public float fHorizontal;
-	//[HideInInspector]	
-	//public float fVertical;
-	//[HideInInspector]	
-	//public bool bPassButton;
-	//[HideInInspector]	
-	//public bool bShootButton;
-	//[HideInInspector]
-	//public bool bShootButtonFinished;
-	//[HideInInspector]		
-	//public bool pressiPhoneShootButton = false;
-	//[HideInInspector]	
-	//public bool pressiPhonePassButton = false;
-	//[HideInInspector]	
-	//public bool pressiPhoneShootButtonEnded = false;
+
+
+
+    
+    //[HideInInspector]	
+    //public float fHorizontal;
+    //[HideInInspector]	
+    //public float fVertical;
+    //[HideInInspector]	
+    //public bool bPassButton;
+    //[HideInInspector]	
+    //public bool bShootButton;
+    //[HideInInspector]
+    //public bool bShootButtonFinished;
+    //[HideInInspector]		
+    //public bool pressiPhoneShootButton = false;
+    //[HideInInspector]	
+    //public bool pressiPhonePassButton = false;
+    //[HideInInspector]	
+    //public bool pressiPhoneShootButtonEnded = false;
 
     //public Joystick_Script joystick;	
     //public InGameState_Script inGame;
@@ -44,9 +47,16 @@ public class Sphere : MonoBehaviour {
 	public float codigo =1.0f;
 
 	public int prueba=0;
+    [HideInInspector]	
+    public bool OutofBounds;
+    [HideInInspector]
+    public Vector3 OutPosition;
+    [HideInInspector]
+    public SPlayer LastTouch;
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start () {
+        OutPosition = new Vector3(38, 100, 55); //Valor inicial, resetear siempre que se completen los eventos
         // get players, joystick, InGame and Blob
         Locals = GameObject.Find("Local").GetComponent<STeam>().Locals;
         Visitors= GameObject.Find("Visit").GetComponent<STeam>().Visitors;
@@ -67,125 +77,146 @@ public class Sphere : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 
-		
-		if ( owner!=null ) {
-			
-			
-	 		transform.position = owner.transform.position + owner.transform.forward/1.5f + owner.transform.up/5.0f; 
-			float velocity = owner.transform.forward.magnitude*5f*Time.deltaTime;
-			//float direc_z=(transform.position-owner.transform.position)/(transform.position.z-owner.transform.position.z);
-			//////Debug.Log("La direccion en z de owner es: "+direc_z);
-			//Debug.Log("Owner: "+owner);
-			/*
-			if ( fVertical == 0.0f && fHorizontal == 0.0f  && owner.tag == "PlayerTeam1" ) {
-				velocity = 0.0f;
-				gameObject.GetComponent<Rigidbody>().angularVelocity = new Vector3(0,0,0);
-				
-			}
-			*/								//eje rojo
-			transform.RotateAround( owner.transform.right, velocity*10.0f );
-
-
-
-
-        }
-        else //FIXME: esto no permite que le quiten el balon
+        if (Mathf.Abs(transform.position.x) > 37.5 || Mathf.Abs(transform.position.z)> 55)
+            OutofBounds = true;
+        else
+            OutofBounds = false;
+        if (!OutofBounds)
         {
-            
-            float ballRadius = 0.8f;
-            foreach (SPlayer item in Locals)
+            if (owner != null)
             {
-                if (Vector3.SqrMagnitude(item.transform.position - transform.position) < ballRadius)
+                LastTouch = this.owner;
+                //Debug.Log(owner.name);
+                transform.position = owner.transform.position + owner.transform.forward / 1.5f + owner.transform.up / 5.0f;
+                float velocity = owner.transform.forward.magnitude * 5f * Time.deltaTime;
+                
+                
+                
+                if (velocity > 0)
                 {
-                    
-                    this.owner=item;
+                    transform.RotateAround(owner.transform.right, velocity * 10.0f);
+                }
+
+
+
+
+
+            }
+            else //FIXME: esto no permite que le quiten el balon
+            {
+
+                float ballRadius = 0.8f;
+                foreach (SPlayer item in Locals)
+                {
+                    if (Vector3.SqrMagnitude(item.transform.position - transform.position) < ballRadius)
+                    {
+
+                        this.owner = item;
+                    }
+                }
+
+                foreach (SPlayer item in Visitors)
+                {
+                    if (Vector3.SqrMagnitude(item.transform.position - transform.position) < ballRadius)
+                    {
+                        this.owner = item;
+                    }
                 }
             }
 
-            foreach (SPlayer item in Visitors)
+        }
+        else
+        {
+            if (OutPosition==new Vector3 (38, 100, 55))
             {
-                if (Vector3.SqrMagnitude(item.transform.position - transform.position) < ballRadius)
-                {
-                    this.owner = item;
-                }
+                OutPosition = transform.position;   //Guarda la posición de salida del balón
+                //Debug.Log(OutPosition);
             }
         }
-		
-				
-		
-		
-																			//AGREGUE
-		
-		
 
-		
-	}
 
-	// activate nearest oponent to ball;
-	//void ActivateNearestOponent() {
-	
-	//	float distance = 100000.0f;
-	//	GameObject candidatePlayer = null;
-	//	foreach ( GameObject oponent in opponent ) {			
-			
-	//		if ( !oponent.GetComponent<Player_Script>().temporallyUnselectable ) {
-				
-	//			oponent.GetComponent<Player_Script>().state = Player_Script.Player_State.MOVE_AUTOMATIC;
-				
-	//			Vector3 relativePos = transform.InverseTransformPoint( oponent.transform.position );
-				
-	//			float newdistance = relativePos.magnitude;
-				
-	//			if ( newdistance < distance ) {
-				
-	//				distance = newdistance;
-	//				candidatePlayer = oponent;
-					
-	//			}
-	//		}
-			
-	//	}
-		
-	//	// set in STOLE_BALL if player found
-	//	if ( candidatePlayer )
-	//		 candidatePlayer.GetComponent<Player_Script>().state = Player_Script.Player_State.STOLE_BALL;
-		
-		
-	//}
-	
-	//// activate nearest player to ball
-	//void ActivateNearestPlayer() {
-		
-	//	//------------------------PUSE----------------------------------------------------
-		
-	//	float distance = 100000.0f;
-	//	GameObject candidatePlayer = null;
-	//	foreach ( GameObject player in players ) {			
-			
-	//		if ( !player.GetComponent<Player_Script>().temporallyUnselectable ) {
-				
-	//			player.GetComponent<Player_Script>().state = Player_Script.Player_State.MOVE_AUTOMATIC;
-				
-	//			Vector3 relativePos = transform.InverseTransformPoint( player.transform.position );
-				
-	//			float newdistance = relativePos.magnitude;
-				
-	//			if ( newdistance < distance ) {
-				
-	//				distance = newdistance;
-	//				candidatePlayer = player;
-					
-	//			}
-	//		}
-			
-	//	}
-		
-	//	// set in STOLE_BALL if player found
-	//	if ( candidatePlayer )
-	//		candidatePlayer.GetComponent<Player_Script>().state = Player_Script.Player_State.STOLE_BALL;
-	//	//----------------------------------------------------------------------
-		
-	/*	
+
+
+        //AGREGUE
+
+
+
+
+    }
+    /**
+    *@funtion ResetCorner
+    *@brief Devuelve las variables a las posiciones iniciales
+    **/
+    public void ResetCorner()
+    {
+        
+    }
+
+    // activate nearest oponent to ball;
+    //void ActivateNearestOponent() {
+
+    //	float distance = 100000.0f;
+    //	GameObject candidatePlayer = null;
+    //	foreach ( GameObject oponent in opponent ) {			
+
+    //		if ( !oponent.GetComponent<Player_Script>().temporallyUnselectable ) {
+
+    //			oponent.GetComponent<Player_Script>().state = Player_Script.Player_State.MOVE_AUTOMATIC;
+
+    //			Vector3 relativePos = transform.InverseTransformPoint( oponent.transform.position );
+
+    //			float newdistance = relativePos.magnitude;
+
+    //			if ( newdistance < distance ) {
+
+    //				distance = newdistance;
+    //				candidatePlayer = oponent;
+
+    //			}
+    //		}
+
+    //	}
+
+    //	// set in STOLE_BALL if player found
+    //	if ( candidatePlayer )
+    //		 candidatePlayer.GetComponent<Player_Script>().state = Player_Script.Player_State.STOLE_BALL;
+
+
+    //}
+
+    //// activate nearest player to ball
+    //void ActivateNearestPlayer() {
+
+    //	//------------------------PUSE----------------------------------------------------
+
+    //	float distance = 100000.0f;
+    //	GameObject candidatePlayer = null;
+    //	foreach ( GameObject player in players ) {			
+
+    //		if ( !player.GetComponent<Player_Script>().temporallyUnselectable ) {
+
+    //			player.GetComponent<Player_Script>().state = Player_Script.Player_State.MOVE_AUTOMATIC;
+
+    //			Vector3 relativePos = transform.InverseTransformPoint( player.transform.position );
+
+    //			float newdistance = relativePos.magnitude;
+
+    //			if ( newdistance < distance ) {
+
+    //				distance = newdistance;
+    //				candidatePlayer = player;
+
+    //			}
+    //		}
+
+    //	}
+
+    //	// set in STOLE_BALL if player found
+    //	if ( candidatePlayer )
+    //		candidatePlayer.GetComponent<Player_Script>().state = Player_Script.Player_State.STOLE_BALL;
+    //	//----------------------------------------------------------------------
+
+    /*	
 		lastInputPlayer = inputPlayer;
 		
 		float distance = 1000000.0f;
@@ -236,10 +267,10 @@ public class Sphere : MonoBehaviour {
 				inputPlayer.GetComponent<Player_Script>().state = Player_Script.Player_State.CONTROLLING;
 			}
 		} */
-	
-	//}
-	
-		
-	
-	
+
+    //}
+
+
+
+
 }

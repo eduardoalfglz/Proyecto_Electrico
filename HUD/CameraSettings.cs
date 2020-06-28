@@ -22,16 +22,7 @@ public class CameraSettings : MonoBehaviour
             Camera.main.transform.rotation = Quaternion.Euler(PlayerPrefs.GetFloat("RotationX"), -90f, 0.6f);
         }
         
-        /*PlayerPrefs.SetFloat("PositionX", Camera.main.transform.position.x);
-        PlayerPrefs.SetFloat("PositionY", Camera.main.transform.position.y);
-        PlayerPrefs.SetFloat("RotationX", Camera.main.transform.rotation.x);*/
-
-
-
-
-        //Camera Standard values 
-        //position X=105.5, y=73.3, Z=0
-        //Angle X=38, y=-90, z=0.6
+     
 
     }
 

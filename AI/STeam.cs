@@ -13,21 +13,27 @@ public class STeam : MonoBehaviour
     public enum Destination
     {
         Initial = 0,
-        Default = 1
+        Default = 1,
+        Corner = 2,
     }
     //Variables to instatiate players
     //public SPlayer[] locals;
     private GameObject Local;
     public Vector3[] local_position;
     public Vector3[] local_init_position;
+    public Vector3[] attack_corner_position;
+    private GameObject GK_LocaL;
     //public SPlayer[] visitors;
     private GameObject Visit;
     public Vector3[] visit_position;
     public Vector3[] visit_init_position;
+    public Vector3[] defend_corner_position;
     public SPlayer playerPrefab;
     public SPlayer OpponentPrefab;
+    private GameObject GK_Visit;
     //
-
+    [HideInInspector]
+    public Sphere sphere;
 
 
 
@@ -38,7 +44,7 @@ public class STeam : MonoBehaviour
     //public CompositeBehavior behavior;
 
 
-    
+
     [Range(1f, 10f)]
     public float neighborRadius = 5f;
     [Range(0f, 1f)]
@@ -57,7 +63,9 @@ public class STeam : MonoBehaviour
         ControlTimes.Add("Pass", 2f);
         //behavior = GameObject.FindObjectOfType<CompositeBehavior>() as CompositeBehavior;
 
-
+        sphere = GameObject.Find("soccer_ball").GetComponent<Sphere>();
+        GK_LocaL = GameObject.Find("GoalKeeper_Local");
+        GK_Visit = GameObject.Find("GoalKeeper_Visit");
         //Inicializacion de jugadores
 
         //Local
@@ -84,24 +92,63 @@ public class STeam : MonoBehaviour
 
 
         local_init_position = new Vector3[10];
-        //FIXME: esto se tiene que cambiar, ahora me da pereza no tengo mouse y no tengo segundo monitor
+
         //Defenders
         local_init_position[0] = new Vector3(-23.4f, 0.2552834f, -31.4f); //Posicion jugador 0
         local_init_position[1] = new Vector3(-10.1f, 0.2552834f, -37.2f); //Posicion jugador 1
         local_init_position[2] = new Vector3(10.1f, 0.2552834f, -36.3f); //Posicion jugador 2
         local_init_position[3] = new Vector3(24.77f, 0.2552834f, -29.39f); //Posicion jugador 3
-             
+
         //Middlers
         local_init_position[4] = new Vector3(20.46f, 0.2552834f, -8.85f); //Posicion jugador 4
         local_init_position[5] = new Vector3(7.65f, 0.2552834f, -13.26f); //Posicion jugador 5
         local_init_position[6] = new Vector3(-5.7f, 0.2552834f, -13.4f); //Posicion jugador 6
         local_init_position[7] = new Vector3(-21.1f, 0.2552834f, -8.7f); //Posicion jugador 7
-             
+
         //Attackers
         local_init_position[8] = new Vector3(-1.5f, 0.2552834f, -1); //Posicion jugador 8
         local_init_position[9] = new Vector3(1.5f, 0.2552834f, -1); //Posicion jugador 8
 
 
+
+
+        attack_corner_position = new Vector3[10];
+
+        //Defenders
+        attack_corner_position[0] = new Vector3(-26.1f, 0.2552834f, 11f); //Posicion jugador 0
+        attack_corner_position[1] = new Vector3(-5f, 0.2552834f, 0f); //Posicion jugador 1
+        attack_corner_position[2] = new Vector3(5f, 0.2552834f, 0f); //Posicion jugador 2
+        attack_corner_position[3] = new Vector3(26.9f, 0.2552834f, 10.8f); //Posicion jugador 3
+
+        //Middlers
+        attack_corner_position[4] = new Vector3(8.4f, 0.2552834f, 40.7f); //Posicion jugador 4
+        attack_corner_position[5] = new Vector3(3.1f, 0.2552834f, 36.2f); //Posicion jugador 5
+        attack_corner_position[6] = new Vector3(-4.4f, 0.2552834f, 37.2f); //Posicion jugador 6
+        attack_corner_position[7] = new Vector3(-4.9f, 0.2552834f, 44.5f); //Posicion jugador 7
+
+        //Attackers
+        //attack_corner_position[8] = new Vector3(-37.f, 0.2552834f, 55.93f); //Posicion jugador 8
+        attack_corner_position[8] = new Vector3(-1.5f, 0.2552834f, 44.93f); //Posicion jugador 8
+        attack_corner_position[9] = new Vector3(2.5f, 0.2552834f, 44.6f); //Posicion jugador 9
+
+
+        defend_corner_position = new Vector3[10];
+
+        //Defenders
+        defend_corner_position[0] = new Vector3(-6.3f, 0.2552834f, 53.1f); //Posicion jugador 0
+        defend_corner_position[1] = new Vector3(-2.9f, 0.2552834f, 51.4f); //Posicion jugador 1
+        defend_corner_position[2] = new Vector3(3.1f, 0.2552834f, 51.1f); //Posicion jugador 2
+        defend_corner_position[3] = new Vector3(8.4f, 0.2552834f, 51.8f); //Posicion jugador 3
+
+        //Middlers
+        defend_corner_position[4] = new Vector3(9.5f, 0.2552834f, 42.7f); //Posicion jugador 4
+        defend_corner_position[5] = new Vector3(3.1f, 0.2552834f, 38.2f); //Posicion jugador 5
+        defend_corner_position[6] = new Vector3(-3.1f, 0.2552834f, 39.2f); //Posicion jugador 6
+        defend_corner_position[7] = new Vector3(-4f, 0.2552834f, 46.5f); //Posicion jugador 7
+
+        //Attackers
+        defend_corner_position[8] = new Vector3(0f, 0.2552834f, 25.93f); //Posicion jugador 8
+        defend_corner_position[9] = new Vector3(1.5f, 0.2552834f, 43.6f); //Posicion jugador 8
         Visit = GameObject.Find("Visit");
         //FIXME 16.9.19 Aqui se puede crear un archivo para guardar las posiciones predeterminadas de los jugadores, de esa forma crear "formaciones"
         visit_position = new Vector3[10];
@@ -111,15 +158,15 @@ public class STeam : MonoBehaviour
             visit_position[i] = local_position[i];
             visit_position[i].z = -visit_position[i].z;
             visit_init_position[i] = local_init_position[i];
-            visit_init_position[i].z = -local_init_position[i].z+10f;
+            visit_init_position[i].z = -local_init_position[i].z + 10f;
             //visit_init_position[i].z = -visit_position[i].z;
         }
 
-        visit_init_position[8]= new Vector3(-6.2f, 0.2552834f, 8.8f); //Posicion jugador 8 visitante debe ser diferente a la del local
+        visit_init_position[8] = new Vector3(-6.2f, 0.2552834f, 8.8f); //Posicion jugador 8 visitante debe ser diferente a la del local
         visit_init_position[9] = new Vector3(6.59f, 0.2552834f, 8.4f); //Posicion jugador p visitante debe ser diferente a la del local
 
 
-        if (this.name=="Local")
+        if (this.name == "Local")
         {
             SPlayer tempPlayer;
 
@@ -130,7 +177,7 @@ public class STeam : MonoBehaviour
                 tempPlayer.PlayerId = i;
                 Locals.Add(tempPlayer);
 
-                
+
 
 
             }
@@ -147,13 +194,13 @@ public class STeam : MonoBehaviour
             Locals[9].GetComponent<SPlayer>().type = SPlayer.TypePlayer.ATTACKER;
 
         }
-        else if (this.name=="Visit")
+        else if (this.name == "Visit")
         {
             SPlayer tempPlayer;
 
             for (int i = 0; i < 10; i++)
             {
-                tempPlayer= Instantiate(OpponentPrefab, visit_position[i], Quaternion.identity, Visit.transform);
+                tempPlayer = Instantiate(OpponentPrefab, visit_position[i], Quaternion.identity, Visit.transform);
                 tempPlayer.name = string.Concat("Visit_", i);
                 tempPlayer.PlayerId = i;
                 Visitors.Add(tempPlayer);
@@ -171,9 +218,9 @@ public class STeam : MonoBehaviour
 
             Visitors[8].GetComponent<SPlayer>().type = SPlayer.TypePlayer.ATTACKER;
             Visitors[9].GetComponent<SPlayer>().type = SPlayer.TypePlayer.ATTACKER;
-
+            
         }
-
+        EstaturaJugadores(Locals, Visitors, GK_LocaL, GK_Visit, 0.1f, 0.7f, 0.1f);
         //Local
 
 
@@ -192,7 +239,7 @@ public class STeam : MonoBehaviour
         //{
         //    List<Transform> context = GetTransforms(player);
 
-            
+
         //    Vector3 move = behavior.CalculateMove(player, context, this);
         //    move *= driveFactor;
         //    if (move.sqrMagnitude > squareMaxSpeed)
@@ -213,7 +260,7 @@ public class STeam : MonoBehaviour
     {
         List<Transform> context = new List<Transform>();
         //Collider[] contextColliders = Physics.OverlapSphere(player.transform.position, neighborRadius);
-        if (player.transform.parent.name=="Local")
+        if (player.transform.parent.name == "Local")
         {
             foreach (SPlayer c in Locals)
             {
@@ -247,11 +294,11 @@ public class STeam : MonoBehaviour
     {
         if (destination == (int)Destination.Default)
         {
-            for (int i = 0; i < Visitors.Count; i++)
+            for (int i = 0; i < Locals.Count; i++)
             {
                 Vector3 difference = Locals[i].transform.position - local_position[i];
 
-                if (difference.magnitude>3f)//FIXME: esto se puede ajusta a un mejor valor
+                if (difference.magnitude > 3f)//FIXME: esto se puede ajusta a un mejor valor
                 {
                     return false;
                 }
@@ -287,38 +334,152 @@ public class STeam : MonoBehaviour
                 }
             }
         }
-        return true ;
+        if (destination == (int)Destination.Corner)
+        {
+            Vector3 difference;
+            for (int i = 0; i < Locals.Count; i++)
+            {
+                if (Locals[0].bFirstHalf)
+                {
+                    //Primer tiempo
+                    if (sphere.OutPosition.z < 0)
+                    {
+                        difference = Locals[i].transform.position + defend_corner_position[i];  //Se introduce un menos para la correccion de la definicion
+                    }
+                    else
+                    {
+                        if (sphere.OutPosition.x < 0 && i == 8)
+                        {
+                            difference = Locals[i].transform.position - new Vector3(-38, 0.2f, 56);
+                        }
+                        else if (sphere.OutPosition.x > 0 && i == 9)
+                        {
+                            difference = Locals[i].transform.position - new Vector3(38, 0.2f, 56);
+                        }
+                        else
+                        {
+                            difference = Locals[i].transform.position - attack_corner_position[i];
+                        }
+
+                    }
+                }
+                else
+                {
+                    if (sphere.OutPosition.z < 0)   //ataque en corner
+                    {
+                        if (sphere.OutPosition.x < 0 && i == 8)
+                        {
+                            difference = Locals[i].transform.position - new Vector3(-38, 0.2f, -56);
+                        }
+                        else if (sphere.OutPosition.x > 0 && i == 9)
+                        {
+                            difference = Locals[i].transform.position - new Vector3(38, 0.2f, -56);
+                        }
+                        else
+                        {
+                            difference = Locals[i].transform.position + attack_corner_position[i];
+                        }
+                    }
+                    else
+                    {
+
+                        difference = Locals[i].transform.position - defend_corner_position[i];  //Se introduce un menos para la correccion de la definicion
+                    }
+                }
+
+
+                if (difference.magnitude > 3f)//FIXME: esto se puede ajusta a un mejor valor
+                {
+                    return false;
+                }
+            }
+            for (int i = 0; i < Visitors.Count; i++)
+            {
+                if (Visitors[0].bFirstHalf)
+                {
+                    //Segundo tiempo
+                    if (sphere.OutPosition.z < 0)
+                    {
+                        difference = Visitors[i].transform.position + defend_corner_position[i];  //Se introduce un menos
+                    }
+                    else
+                    {
+                        if (sphere.OutPosition.x < 0 && i == 8)
+                        {
+                            difference = Visitors[i].transform.position - new Vector3(-38, 0.2f, 56);
+                        }
+                        else if (sphere.OutPosition.x > 0 && i == 9)
+                        {
+                            difference = Visitors[i].transform.position - new Vector3(38, 0.2f, 56);
+                        }
+                        else
+                        {
+                            difference = Visitors[i].transform.position - attack_corner_position[i]; 
+                        }
+
+                    }
+                }
+                else
+                {
+                    //Primer tiempo
+                    if (sphere.OutPosition.z < 0)   //ataque en corner
+                    {
+                        if (sphere.OutPosition.x < 0 && i == 8)
+                        {
+                            difference = Visitors[i].transform.position - new Vector3(-38, 0.2f, -56);
+                        }
+                        else if (sphere.OutPosition.x > 0 && i == 9)
+                        {
+                            difference = Visitors[i].transform.position - new Vector3(38, 0.2f, -56);
+                        }
+                        else
+                        {
+                            difference = Visitors[i].transform.position + attack_corner_position[i]; //Se introduce un menos para la correccion de la definicion
+                        }
+                    }
+                    else
+                    {
+                        difference = Visitors[i].transform.position - defend_corner_position[i];  
+                    }
+                }
+
+                if (difference.magnitude > 3f)//FIXME: esto se puede ajusta a un mejor valor
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
 
     /**
     *@funtion EstaturaJugadores
     *@brief Le cambia la estatura a los jugadores inicialmente.
-    **/
-    //FIXME: Esta funcion no ha sido revisada.
-    void EstaturaJugadores(GameObject[] arrayPlayers, GameObject[] arrayPlayers2, GameObject portero1, GameObject portero2, float x1, float y1, float z1)
+    **/   
+    void EstaturaJugadores(List<SPlayer> Locals, List<SPlayer> Visitors, GameObject portero1, GameObject portero2, float x1, float y1, float z1)
     {
 
         float x;
         float y;
         float z;
-        foreach (GameObject go in arrayPlayers)
+        foreach (SPlayer go in Locals)
         {
             x = Random.Range(0.0f, x1);
-            y = Random.Range(0.0f, y1);
+            y = Random.Range(0.2f, y1);
             z = Random.Range(0.0f, z1);
             go.transform.localScale = new Vector3(go.transform.localScale.x + x, go.transform.localScale.y + y, go.transform.localScale.z + z);
         }
-        foreach (GameObject go in arrayPlayers2)
+        foreach (SPlayer go in Visitors)
         {
             x = Random.Range(0.0f, x1);
-            y = Random.Range(0.0f, y1);
+            y = Random.Range(0.2f, y1);
             z = Random.Range(0.0f, z1);
             go.transform.localScale = new Vector3(go.transform.localScale.x + x, go.transform.localScale.y + y, go.transform.localScale.z + z);
         }
 
         x = Random.Range(0.0f, x1);
-        y = Random.Range(0.0f, y1);
+        y = Random.Range(0.2f, y1);
         z = Random.Range(0.0f, z1);
         portero1.transform.localScale = new Vector3(portero1.transform.localScale.x + x, portero1.transform.localScale.y + y, portero1.transform.localScale.z + z);
 

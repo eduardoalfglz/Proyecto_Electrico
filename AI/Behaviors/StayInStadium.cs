@@ -35,14 +35,14 @@ public class StayInStadium : Sbehavior
             return Vector3.zero;
         }else if (x < 0.95f && z > 0.95f)
         {
-            Debug.Log("fuera de limites");
+            //Debug.Log("fuera de limites");
             return centerOffset * z * z;
         }else if (x > 0.95f && z < 0.95f)
         {
-            Debug.Log("fuera de limites");
+            //Debug.Log("fuera de limites");
             return centerOffset * x * x;
         }
-        Debug.Log("fuera de limites");
+        //Debug.Log("fuera de limites");
         return centerOffset * x * z;
     }
 }
