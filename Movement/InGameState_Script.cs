@@ -302,7 +302,7 @@ public class InGameState_Script : MonoBehaviour
     {
         //
 
-        Debug.Log(CurrEvent);
+        //Debug.Log(CurrEvent);
         if (!GPSEnable)
         {
             Evaluate();

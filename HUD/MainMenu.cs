@@ -10,7 +10,9 @@ public class MainMenu : MonoBehaviour
     public GameObject Select_team;
     public GameObject OptionsMenu;
     Toggle gpsToggle;
-    
+    private string CSVfile;
+    private InputField csvinput;
+    private Button SaveCSV;
     //public GameObject EventS1;
     //public GameObject EventS2;
     //public GameObject BGmusic;
@@ -49,10 +51,14 @@ public class MainMenu : MonoBehaviour
                 GPSValueChanged(gpsToggle);
             });
             PlayerPrefs.SetInt("GPSEnable", gpsToggle.isOn ? 1 : 0);
+            csvinput = transform.Find("InputCSV").GetComponent<InputField>();
+            csvinput.characterLimit = 1000;
+            SaveCSV = transform.Find("SaveCSV").GetComponent<Button>();
         }
+
         
-        
-        
+            
+
     }
 
     /*public void MusicVolume(float Value)
@@ -98,11 +104,25 @@ public class MainMenu : MonoBehaviour
     public void Team_Selection()
     {
         Debug.Log("Team_Selection");
+        if (PlayerPrefs.GetInt("GPSEnable") == 1)
+        {
+            if (System.IO.File.Exists(CSVfile))
+            {
+                MMenu.SetActive(false);
+                //EventS1.SetActive(false);
+                Select_team.SetActive(true);
+                //EventS2.SetActive(true);
+            }
+        } else
+        {
+            MMenu.SetActive(false);
+            //EventS1.SetActive(false);
+            Select_team.SetActive(true);
+            //EventS2.SetActive(true);
+        }
 
-        MMenu.SetActive(false);
-        //EventS1.SetActive(false);
-        Select_team.SetActive(true);
-        //EventS2.SetActive(true);
+
+
     }
     public void Back()
     {
@@ -144,6 +164,32 @@ public class MainMenu : MonoBehaviour
     void GPSValueChanged(Toggle change)
     {
         PlayerPrefs.SetInt("GPSEnable", gpsToggle.isOn ? 1 : 0);
+        if (PlayerPrefs.GetInt("GPSEnable")==1)
+        {
+            csvinput.gameObject.SetActive(true);
+            SaveCSV.gameObject.SetActive(true);
+        } else
+        {
+            csvinput.gameObject.SetActive(false);
+            SaveCSV.gameObject.SetActive(false);
+        }
     }
    
+
+    public void getInputField ()
+    {
+        CSVfile = csvinput.transform.Find("Text").GetComponent<Text>().text;
+        //GetComponentInChildren
+        PlayerPrefs.SetString("CSVFile", CSVfile);
+        Debug.Log(CSVfile);
+        if (System.IO.File.Exists(CSVfile))
+        {
+            Debug.Log("yey");
+            SaveCSV.GetComponent<Image>().color = Color.green;
+        } else
+        {
+            Debug.Log(":(");
+            SaveCSV.GetComponent<Image>().color = Color.red;
+        }
+    }
 }

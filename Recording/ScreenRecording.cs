@@ -36,6 +36,10 @@ public class ScreenRecording : MonoBehaviour
     }
     public void OnApplicationQuit()
     {
-        screenRec.Stop();
+        if (CanRecord)
+        {
+            screenRec.Stop();
+        }
+        
     }
 }

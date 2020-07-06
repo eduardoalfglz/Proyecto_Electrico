@@ -15,12 +15,12 @@ public class CameraSettings : MonoBehaviour
         CameraMenuGUI = transform.Find("CameraMenu").gameObject;
         
         //Camera.main = GameObject.Find("Main_Camera");
-        if (PlayerPrefs.GetFloat("PositionX")!=0)
-        {
+        //if (PlayerPrefs.GetFloat("PositionX")!=0)
+        //{
             
-            Camera.main.transform.position = new Vector3(PlayerPrefs.GetFloat("PositionX"), PlayerPrefs.GetFloat("PositionY"), -1f);
-            Camera.main.transform.rotation = Quaternion.Euler(PlayerPrefs.GetFloat("RotationX"), -90f, 0.6f);
-        }
+        //    Camera.main.transform.position = new Vector3(PlayerPrefs.GetFloat("PositionX"), PlayerPrefs.GetFloat("PositionY"), -1f);
+        //    Camera.main.transform.rotation = Quaternion.Euler(PlayerPrefs.GetFloat("RotationX"), -90f, 0.6f);
+        //}
         
      
 
