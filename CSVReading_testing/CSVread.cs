@@ -32,11 +32,11 @@ public class CSVread : MonoBehaviour
     private bool GPSEnable;
     public List<SPlayer> Locals = new List<SPlayer>();
     public List<SPlayer> Visitors = new List<SPlayer>();
-    private List<bool> initializedplayer = new List<bool>();
     private List<string> player_name = new List<string>();
     private List<int> player_lat = new List<int>();
     private List<int> player_lon = new List<int>();
-    
+    private List<int> player_alt = new List<int>();
+
 
 
     private int player_count=0;
@@ -76,14 +76,17 @@ public class CSVread : MonoBehaviour
                         string temp_name = Regex.Match(temp[j], "(.+)GPS LAT",RegexOptions.IgnoreCase).Value;
                         temp_name = temp_name.Trim();
                         player_name.Add(temp_name);
-                        player_count++;
-                        initializedplayer.Add(false);
+                        
                         
                         Vector3 temp_Location = new Vector3(800, 800, 800);
 
                         SPlayer tempPlayer = Instantiate(playerPrefab, temp_Location, Quaternion.identity, Local.transform);
-                        Locals.Add(tempPlayer);
+                        tempPlayer.name = player_name[player_count];
+                        tempPlayer.PlayerId = player_count;
 
+                        
+                        Locals.Add(tempPlayer);
+                        player_count++;
                         player_lat.Add(j);
                         j++;
                         if (Regex.IsMatch(temp[j], "GPS LON", RegexOptions.IgnoreCase))
@@ -94,6 +97,18 @@ public class CSVread : MonoBehaviour
                             Debug.LogError("No existe latitud :(");
                             Application.Quit();
                         }
+                        j++;
+                        j++;
+
+                        if (Regex.IsMatch(temp[j], "GPS ALT", RegexOptions.IgnoreCase))
+                        {
+                            player_alt.Add(j);
+                        }
+                        else
+                        {
+                            Debug.LogError("No existe Altura :(");
+                            Application.Quit();
+                        }
                     }
                 }
                 Debug.Log(player_count);
@@ -102,7 +117,7 @@ public class CSVread : MonoBehaviour
                     Debug.Log(player_name[j]);
                     Debug.Log(player_lat[j]);
                     Debug.Log(player_lon[j]);
-                    Debug.Log(initializedplayer[j]);
+                    Debug.Log(player_alt[j]);
                 }
                     
             } else
@@ -111,46 +126,23 @@ public class CSVread : MonoBehaviour
 
                 for (int j = 0; j < player_count; j++)
                 {
-
-                    if (initializedplayer[j])
+                    if (temp[player_lat[j]] != "" && temp[player_lon[j]] != "" && temp[player_alt[j]] != "")
                     {
-                        if (temp[player_lat[j]] != "" && temp[player_lon[j]] != "")
-                        {
-                            float temp_lat = float.Parse(temp[player_lat[j]]);
-                            temp_lat *= 10;
-                            float temp_lon = float.Parse(temp[player_lon[j]]);
-                            temp_lon *= 10;
-                            Locals[j].transform.position = new Vector3(temp_lat, 0.2552834f, temp_lon);
-                        }
+                        float temp_lat = float.Parse(temp[player_lat[j]]);
+                        temp_lat *= Mathf.PI / 180;
                         
-                    } else
-                    {
-                        if (temp[player_lat[j]]!="" && temp[player_lon[j]]!="")
-                        {
-                            initializedplayer[j] = true;
-                            
-                            float temp_lat = float.Parse(temp[player_lat[j]]);
-                            temp_lat *= 10;
-                            float temp_lon = float.Parse(temp[player_lon[j]]);
-                            temp_lon *= 10;
-                            Vector3 temp_Location = new Vector3(temp_lat, 0.2552834f, temp_lon);
+                        float temp_lon = float.Parse(temp[player_lon[j]]);
+                        temp_lon *= Mathf.PI / 180;
 
-                            SPlayer tempPlayer = Instantiate(playerPrefab, temp_Location, Quaternion.identity, Local.transform);
-                            tempPlayer.name = player_name[j];
-                            tempPlayer.PlayerId = j;
-                            
-                            Locals[j] = tempPlayer;
-
-                            //GameObject tempPlayer_delete = Local.transform.Find("Player_Calvo(Clone)").gameObject;
-                            //Debug.Log(tempPlayer_delete);
-
-                            //Destroy(tempPlayer);
-
-
-                        }
-
+                        float temp_alt = float.Parse(temp[player_alt[j]]);
+                        float radius = temp_alt + 6371000;
+                        float xt = radius * Mathf.Cos(temp_lat) * Mathf.Cos(temp_lon);
+                        xt %= 10000;
+                        float yt = radius * Mathf.Cos(temp_lat) * Mathf.Sin(temp_lon);
+                        yt %= 10000;
+                        Locals[j].transform.position = new Vector3(xt, 0.2552834f, yt);
                     }
-                    
+
                 }
                 //Debug.Log(inp_ln);
             }
